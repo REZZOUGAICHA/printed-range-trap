@@ -75,3 +75,16 @@ locked but not installed locally; `dev` group = ruff.
 is several hundred MB we never use locally. The model card suggests installing
 transformers from GitHub main, but 5.18.0 already ships `qwen3_5`; a release
 pin is reproducible, main is not. On Kaggle we keep the preinstalled CUDA torch.
+
+## D7 — Load text-only in fp16, with a NaN check (2026-10-02)
+
+**Decision.** Load with `AutoModelForCausalLM` (text part only) in float16,
+pinned revision, and check that the logits are finite before generating.
+
+**Why.** We never send images, so the vision encoder is not needed. T4/P100
+have no bfloat16 support; the model was trained in bfloat16, and fp16 can
+overflow into NaN. The check makes that failure visible instead of silent.
+Fallbacks if it fails: float32 split over both T4s, or 8-bit.
+
+**Reviewer question.** "Could fp16 change the model's answers compared to
+bf16?" — Possibly, slightly. We report the precision used in `run_meta.json`.
