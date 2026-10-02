@@ -51,3 +51,27 @@ slightly; we also report strict accuracy (gold label only) in Phase 4.
 section is honest. Alternatives: plain `requirements.txt` (no lock of
 transitive deps unless hand-frozen), conda (slow, heavy for a small project).
 On Kaggle we export from the lock and keep Kaggle's preinstalled CUDA torch.
+
+## D5 — Main model: Qwen/Qwen3.5-4B, thinking off (2026-10-02)
+
+**Decision.** `Qwen/Qwen3.5-4B` at revision `851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a`,
+text-only use, `enable_thinking=False` for the main run.
+
+**Why.** Current frontier small-model family, strong FR support, Apache-2.0,
+not gated. 4.66B parameters (including the vision encoder) is within the
+0.6–6B limit. Thinking is on by default in its chat template; the main run
+turns it off to match typical chatbot use.
+
+**Reviewer question.** "Does the unused vision encoder matter?" — No for
+behaviour (text-only input), but the parameter count we report includes it.
+
+## D6 — Dependency groups; transformers pinned to a release (2026-10-02)
+
+**Decision.** Python 3.13 (matches the Kaggle image). Base deps = local
+tooling (pyyaml); `inference` group = transformers 5.18.0 + accelerate,
+locked but not installed locally; `dev` group = ruff.
+
+**Why.** Inference only runs on Kaggle, and accelerate pulls in torch, which
+is several hundred MB we never use locally. The model card suggests installing
+transformers from GitHub main, but 5.18.0 already ships `qwen3_5`; a release
+pin is reproducible, main is not. On Kaggle we keep the preinstalled CUDA torch.
