@@ -88,3 +88,21 @@ Fallbacks if it fails: float32 split over both T4s, or 8-bit.
 
 **Reviewer question.** "Could fp16 change the model's answers compared to
 bf16?" — Possibly, slightly. We report the precision used in `run_meta.json`.
+
+## D8 — Greedy + 10 samples with the model's recommended settings (2026-10-02)
+
+**Decision.** Each prompt gets 1 greedy run and 10 sampled runs (fixed seeds)
+with Qwen's recommended non-thinking settings (temperature 0.7, top_p 0.8,
+top_k 20, presence_penalty 1.5). Greedy and sampled results are reported side
+by side. Replaces the earlier "3 samples at temperature 0.7".
+
+**Why.** Greedy is the standard primary result (reproducible; usually scores
+higher than sampling — Song et al. 2024, arXiv 2407.10457), but real chatbot
+users receive sampled answers, and medical LLM outputs vary across runs
+(e.g. medRxiv 10.1101/2025.06.04.25328288). With 10 samples we can report a
+trap *rate* per prompt instead of a single yes/no. Using the model card's
+settings avoids an arbitrary choice.
+
+**Reviewer question.** "Why 10?" — A cost/precision trade-off: short answers
+make 10 cheap, and it gives rates in steps of 10%. "Is presence_penalty
+supported in transformers?" — To verify when writing run_model.py.
