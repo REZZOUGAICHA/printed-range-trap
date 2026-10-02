@@ -140,3 +140,20 @@ and 10 sampled answers per prompt, not greedy only.
 **Why.** In the Phase 0 smoke test, greedy escaped the trap on FER_F with
 relevant context. A greedy-only pilot could miss a trap that appears in a
 fraction of sampled answers. Extra cost is small (short answers).
+
+## D12 — presence_penalty omitted; seeds from prompt ids (2026-10-02)
+
+**Decision.** Sampled runs use temperature 0.7, top_p 0.8, top_k 20, min_p 0.0
+from the Qwen3.5 model card, but not presence_penalty=1.5. Each prompt's seed
+is `zlib.crc32(prompt_id)`, and its 10 samples come from one generate() call.
+
+**Why.** transformers 5.18.0 `generate()` has no presence_penalty (checked in
+its GenerationConfig). Writing our own version risks not matching the serving
+frameworks' definition, which would look identical but not be. Its purpose is
+to stop repetition in long outputs; our answers are 2 lines and the verdict
+comes first, so the effect on verdicts should be small. Seeds tied to the
+prompt id (not its position) stay the same when a run is resumed or reordered.
+
+**Reviewer question.** "Are sampled runs exactly what chatbot users get?" —
+Close, not identical: no presence_penalty, and GPU arithmetic is not fully
+deterministic. Stated in run_meta.json and the limitations.

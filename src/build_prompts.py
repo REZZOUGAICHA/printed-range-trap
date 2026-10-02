@@ -48,18 +48,20 @@ def build_variants(cases, templates, languages):
         for range_level, context_level in product(RANGES, CONTEXTS):
             # "none" and "irrelevant" context share the context-free gold
             gold = case["gold"]["relevant" if context_level == "relevant" else "no_context"]
-            variants.append({
-                "prompt_id": f"{case['id']}|{lang}|range={range_level}|context={context_level}",
-                "case_id": case["id"],
-                "language": lang,
-                "range": range_level,
-                "context": context_level,
-                "system": template["system"],
-                "user": build_user_message(template, text, range_level, context_level),
-                "gold": gold["verdict"],
-                "accept": gold["accept"],
-                "printed_range_verdict": case["printed_range_verdict"],
-            })
+            variants.append(
+                {
+                    "prompt_id": f"{case['id']}|{lang}|range={range_level}|context={context_level}",
+                    "case_id": case["id"],
+                    "language": lang,
+                    "range": range_level,
+                    "context": context_level,
+                    "system": template["system"],
+                    "user": build_user_message(template, text, range_level, context_level),
+                    "gold": gold["verdict"],
+                    "accept": gold["accept"],
+                    "printed_range_verdict": case["printed_range_verdict"],
+                }
+            )
     return variants
 
 
