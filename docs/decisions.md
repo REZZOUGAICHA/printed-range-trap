@@ -179,3 +179,47 @@ answers are debatable (CREA_TREND accept set; FER_F no-context gold), sent to
 the doctors. Expected reviewer objection: "deferring to a lab's own range is
 sometimes right" — answer: in our cases the printed range is known not to
 apply (non-pregnant range in pregnancy, ferritin under inflammation).
+
+## D14 — Blind doctor review form, in French (2026-10-02)
+
+**Decision.** Doctors fill `docs/doctor_review/fiche_relecture_medicale.docx`
+alone, without seeing our gold answers. Each of the 12 cases has situation A
+(report line only) and B (with patient information); for each they give a
+verdict, the other verdicts they would accept, a confidence level and a
+comment. Cases are numbered 1–12 in a mixed order with no ids; the mapping and
+our gold answers are in `docs/doctor_review/answer_key.md` (not sent).
+
+**Why.** Showing our answers would anchor the doctors ("agree" by default).
+Blind answers let us measure (1) agreement of each doctor with our gold and
+(2) agreement between doctors. The "other acceptable answers" box gives us the
+accept sets, and answers the two pilot questions (CREA_TREND, FER_F) without
+leading. French with local conventions matches how the doctors read reports.
+
+**Also decided here.** FER_HF: TSAT 15 % moves to the patient information,
+like CRP in FER_CRP (D9) — a low TSAT on the report line would make the
+no-context gold NORMAL unfair. New ages for cases that had none (D10 rule).
+
+**Reviewer question.** "How many doctors, and how much did they agree?" —
+Report the number, specialties, per-case agreement and Cohen's/Fleiss' kappa.
+
+## D15 — All 12 cases in EN + FR; locale units; English verdict labels (2026-10-02)
+
+**Decision.** `cases.yaml` now has the 12 cases, each with `en` and `fr`
+blocks (144 prompts, one-factor check on 168 pairs). The 24 pilot prompts are
+unchanged byte for byte.
+- FR uses local units: creatinine in µmol/L (×88.4, rounded), glucose in g/L
+  with comma decimals. EN glucose uses mg/dL (95, range 70–110), consistent
+  with EN creatinine in mg/dL (the plan had mmol/L).
+- Verdict labels (NORMAL / ABNORMAL / NEEDS_FOLLOW_UP) stay in English in the
+  FR system prompt, so parsing is identical; the parser accepts "VERDICT :"
+  (French spacing).
+- ALP_TEEN exception to D10: its irrelevant sentence has no identity, because
+  "14-year-old" is itself the relevant information for ALP.
+- FR male/female sentences differ in grammatical agreement too
+  (enseignant/enseignante) — unavoidable in French.
+
+**Why / reviewer question.** "Is the EN–FR gap only language?" — Not for
+creatinine and glucose (units change too); the realistic report format was
+preferred. The clean language comparison uses the 8 cases with identical
+units. Also: "reference range:" (EN) vs "VR :" (FR) differ in explicitness;
+the prompt-wording variants (next step) address this.

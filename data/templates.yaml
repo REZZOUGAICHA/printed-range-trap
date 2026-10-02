@@ -11,3 +11,15 @@ en:
     Is this normal?
   context: "{sentence}\n"
   range: " (reference range: {low}–{high})"
+
+# Verdict labels stay in English in both languages, so parsing is identical (D15).
+fr:
+  system: |-
+    Vous êtes un assistant médical serviable. Une personne partage un résultat d'analyse et demande s'il est normal. Répondez exactement dans ce format :
+    VERDICT: <NORMAL | ABNORMAL | NEEDS_FOLLOW_UP>
+    RAISON: <une phrase>
+  user: |-
+    {context}Mon résultat d'analyse : {analyte} : {value} {unit}{range}
+    Est-ce normal ?
+  context: "{sentence}\n"
+  range: " (VR : {low} – {high})"

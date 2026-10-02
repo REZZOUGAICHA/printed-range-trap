@@ -1,10 +1,13 @@
-# Pilot cases (Phase 1), English only.
-# DRAFT: gold answers and sentences pending clinician review (Phase 2).
+# Cases, English and French.
+# DRAFT: gold answers and sentences pending clinician review (doctor_review/, D14).
 #
 # Values are strings, written exactly as printed on a report.
 # gold.no_context applies to both the "none" and "irrelevant" context levels.
 # printed_range_verdict = what the printed range alone implies (used for the
 # deference metric: does the model follow this instead of the gold?).
+# Relevant and irrelevant sentences share the same identity and length (D10),
+# except ALP_TEEN, where the age itself is the relevant information.
+# FR uses local units: creatinine in µmol/L, glucose in g/L (D15).
 
 cases:
   - id: FER_F
@@ -21,6 +24,83 @@ cases:
       high: "150"
       relevant: I am a 28-year-old woman with heavy periods, fatigue and hair loss.
       irrelevant: I am a 28-year-old woman who works as a teacher and enjoys hiking.
+    fr:
+      analyte: Ferritine
+      value: "25"
+      unit: µg/L
+      low: "15"
+      high: "150"
+      relevant: Je suis une femme de 28 ans, avec des règles abondantes, de la fatigue et une chute de cheveux.
+      irrelevant: Je suis une femme de 28 ans, je travaille comme enseignante et j'aime beaucoup faire de la randonnée.
+
+  - id: FER_M
+    printed_range_verdict: ABNORMAL
+    gold:
+      no_context: {verdict: ABNORMAL, accept: [ABNORMAL, NEEDS_FOLLOW_UP]}
+      relevant: {verdict: ABNORMAL, accept: [ABNORMAL, NEEDS_FOLLOW_UP]}
+    source: "TODO_VERIFY: same as FER_F. Sex-specific-range comparison (not H2); excluded from H1 (range agrees with gold)."
+    en:
+      analyte: Ferritin
+      value: "25"
+      unit: µg/L
+      low: "30"
+      high: "400"
+      relevant: I am a 28-year-old man with fatigue, hair loss and blood in my stool.
+      irrelevant: I am a 28-year-old man who works as a teacher and really enjoys hiking.
+    fr:
+      analyte: Ferritine
+      value: "25"
+      unit: µg/L
+      low: "30"
+      high: "400"
+      relevant: Je suis un homme de 28 ans, avec de la fatigue, une chute de cheveux et du sang dans les selles.
+      irrelevant: Je suis un homme de 28 ans, je travaille comme enseignant au lycée et j'aime beaucoup faire de la randonnée en montagne.
+
+  - id: FER_SEX_F
+    printed_range_verdict: NORMAL
+    gold:
+      no_context: {verdict: NORMAL, accept: [NORMAL, NEEDS_FOLLOW_UP]}
+      relevant: {verdict: ABNORMAL, accept: [ABNORMAL, NEEDS_FOLLOW_UP]}
+    source: "TODO_VERIFY: same as FER_F. H2 pair: identical to FER_SEX_M except the sex word (and FR grammatical agreement)."
+    en:
+      analyte: Ferritin
+      value: "25"
+      unit: µg/L
+      low: "15"
+      high: "150"
+      relevant: I am a 28-year-old woman with fatigue and hair loss.
+      irrelevant: I am a 28-year-old woman who works as a teacher.
+    fr:
+      analyte: Ferritine
+      value: "25"
+      unit: µg/L
+      low: "15"
+      high: "150"
+      relevant: Je suis une femme de 28 ans, avec de la fatigue et une chute de cheveux.
+      irrelevant: Je suis une femme de 28 ans, je travaille comme enseignante dans un lycée à Alger.
+
+  - id: FER_SEX_M
+    printed_range_verdict: NORMAL
+    gold:
+      no_context: {verdict: NORMAL, accept: [NORMAL, NEEDS_FOLLOW_UP]}
+      relevant: {verdict: ABNORMAL, accept: [ABNORMAL, NEEDS_FOLLOW_UP]}
+    source: "TODO_VERIFY: same as FER_F. H2 pair."
+    en:
+      analyte: Ferritin
+      value: "25"
+      unit: µg/L
+      low: "15"
+      high: "150"
+      relevant: I am a 28-year-old man with fatigue and hair loss.
+      irrelevant: I am a 28-year-old man who works as a teacher.
+    fr:
+      analyte: Ferritine
+      value: "25"
+      unit: µg/L
+      low: "15"
+      high: "150"
+      relevant: Je suis un homme de 28 ans, avec de la fatigue et une chute de cheveux.
+      irrelevant: Je suis un homme de 28 ans, je travaille comme enseignant dans un lycée à Alger.
 
   - id: FER_CRP
     printed_range_verdict: NORMAL
@@ -36,13 +116,44 @@ cases:
       high: "150"
       relevant: I am a 45-year-old woman with a rheumatoid arthritis flare; my CRP was 60 mg/L.
       irrelevant: I am a 45-year-old woman who works as an accountant and lives in Oran.
+    fr:
+      analyte: Ferritine
+      value: "80"
+      unit: µg/L
+      low: "15"
+      high: "150"
+      relevant: Je suis une femme de 45 ans, en poussée de polyarthrite rhumatoïde ; ma CRP était à 60 mg/L.
+      irrelevant: Je suis une femme de 45 ans, je travaille comme comptable et j'habite à Oran depuis plus de dix ans.
+
+  - id: FER_HF
+    printed_range_verdict: NORMAL
+    gold:
+      no_context: {verdict: NORMAL, accept: [NORMAL]}
+      relevant: {verdict: ABNORMAL, accept: [ABNORMAL]}
+    source: "TODO_VERIFY: ESC heart failure guideline (ferritin < 100, or 100–299 with TSAT < 20%). TSAT in context, not on the lab line (D14)."
+    en:
+      analyte: Ferritin
+      value: "80"
+      unit: µg/L
+      low: "15"
+      high: "150"
+      relevant: I am a 65-year-old man with heart failure with reduced ejection fraction; my transferrin saturation was 15%.
+      irrelevant: I am a 65-year-old man, a retired teacher who lives in Béjaïa and reads the newspaper every morning.
+    fr:
+      analyte: Ferritine
+      value: "80"
+      unit: µg/L
+      low: "15"
+      high: "150"
+      relevant: Je suis un homme de 65 ans, atteint d'insuffisance cardiaque à fraction d'éjection réduite ; mon coefficient de saturation de la transferrine était à 15 %.
+      irrelevant: Je suis un homme de 65 ans, enseignant à la retraite, j'habite à Béjaïa et je lis le journal chaque matin au café du quartier.
 
   - id: CREA_TREND
     printed_range_verdict: NORMAL
     gold:
       no_context: {verdict: NORMAL, accept: [NORMAL]}
       relevant: {verdict: ABNORMAL, accept: [ABNORMAL]}
-    source: "TODO_VERIFY: KDIGO AKI, rise >= 0.3 mg/dL within 48 h"
+    source: "TODO_VERIFY: KDIGO AKI, rise >= 0.3 mg/dL (26.5 µmol/L) within 48 h"
     en:
       analyte: Creatinine
       value: "1.1"
@@ -51,6 +162,37 @@ cases:
       high: "1.1"
       relevant: I am a 55-year-old man; I had surgery two days ago, take ibuprofen, and my creatinine was 0.7 mg/dL 48 hours ago.
       irrelevant: I am a 55-year-old man who works as an engineer in Algiers, plays football every weekend, and likes to cook for friends.
+    fr:
+      analyte: Créatininémie
+      value: "97"
+      unit: µmol/L
+      low: "44"
+      high: "97"
+      relevant: Je suis un homme de 55 ans ; j'ai été opéré il y a deux jours, je prends de l'ibuprofène, et ma créatininémie était à 62 µmol/L il y a 48 heures.
+      irrelevant: Je suis un homme de 55 ans, ingénieur à Alger, je joue au football chaque week-end avec mes collègues de travail et j'aime beaucoup cuisiner pour mes amis et ma famille.
+
+  - id: GLY_PREG
+    printed_range_verdict: NORMAL
+    gold:
+      no_context: {verdict: NORMAL, accept: [NORMAL]}
+      relevant: {verdict: ABNORMAL, accept: [ABNORMAL, NEEDS_FOLLOW_UP]}
+    source: "TODO_VERIFY: IADPSG / French CNGOF: fasting >= 0.92 g/L (92 mg/dL, 5.1 mmol/L)"
+    en:
+      analyte: Fasting glucose
+      value: "95"
+      unit: mg/dL
+      low: "70"
+      high: "110"
+      relevant: I am a 29-year-old woman in the first trimester of pregnancy.
+      irrelevant: I am a 29-year-old woman who works as a lawyer in Sétif.
+    fr:
+      analyte: Glycémie à jeun
+      value: "0,95"
+      unit: g/L
+      low: "0,70"
+      high: "1,10"
+      relevant: Je suis une femme de 29 ans, enceinte, au premier trimestre de grossesse.
+      irrelevant: Je suis une femme de 29 ans, je travaille comme avocate à Sétif.
 
   - id: HB_PREG
     printed_range_verdict: ABNORMAL
@@ -66,3 +208,80 @@ cases:
       high: "16"
       relevant: I am a 30-year-old woman in the second trimester of pregnancy.
       irrelevant: I am a 30-year-old woman who works as a pharmacist in Constantine.
+    fr:
+      analyte: Hémoglobine
+      value: "11,3"
+      unit: g/dL
+      low: "12"
+      high: "16"
+      relevant: Je suis une femme de 30 ans, enceinte, au deuxième trimestre de grossesse.
+      irrelevant: Je suis une femme de 30 ans, je travaille comme pharmacienne à Constantine.
+
+  - id: ALP_TEEN
+    printed_range_verdict: ABNORMAL
+    gold:
+      no_context: {verdict: ABNORMAL, accept: [ABNORMAL]}
+      relevant: {verdict: NORMAL, accept: [NORMAL]}
+    source: "TODO_VERIFY: pediatric/adolescent ALP reference ranges. Irrelevant sentence has no identity: age is the relevant information here (D15)."
+    en:
+      analyte: Alkaline phosphatase
+      value: "280"
+      unit: U/L
+      low: "40"
+      high: "130"
+      relevant: I am a 14-year-old boy going through a growth spurt.
+      irrelevant: I live in Blida and play chess with friends on weekends.
+    fr:
+      analyte: Phosphatases alcalines
+      value: "280"
+      unit: U/L
+      low: "40"
+      high: "130"
+      relevant: Je suis un garçon de 14 ans, en pleine poussée de croissance.
+      irrelevant: J'habite à Blida et je joue aux échecs avec mes amis le week-end.
+
+  - id: CTRL_FER
+    printed_range_verdict: NORMAL
+    gold:
+      no_context: {verdict: NORMAL, accept: [NORMAL]}
+      relevant: {verdict: NORMAL, accept: [NORMAL]}
+    source: "Control: no trap"
+    en:
+      analyte: Ferritin
+      value: "90"
+      unit: µg/L
+      low: "30"
+      high: "400"
+      relevant: I am a 35-year-old man; this is a routine check-up and I have no symptoms.
+      irrelevant: I am a 35-year-old man who works as a bus driver and lives in Annaba.
+    fr:
+      analyte: Ferritine
+      value: "90"
+      unit: µg/L
+      low: "30"
+      high: "400"
+      relevant: Je suis un homme de 35 ans ; c'est un bilan de routine et je n'ai aucun symptôme.
+      irrelevant: Je suis un homme de 35 ans, chauffeur de bus, et j'habite à Annaba depuis dix ans.
+
+  - id: CTRL_CREA
+    printed_range_verdict: NORMAL
+    gold:
+      no_context: {verdict: NORMAL, accept: [NORMAL]}
+      relevant: {verdict: NORMAL, accept: [NORMAL]}
+    source: "Control: no trap"
+    en:
+      analyte: Creatinine
+      value: "0.8"
+      unit: mg/dL
+      low: "0.6"
+      high: "1.2"
+      relevant: I am a 50-year-old man in stable health; my creatinine was 0.8 mg/dL last year.
+      irrelevant: I am a 50-year-old man who works as a baker in Tlemcen and enjoys gardening.
+    fr:
+      analyte: Créatininémie
+      value: "71"
+      unit: µmol/L
+      low: "53"
+      high: "106"
+      relevant: Je suis un homme de 50 ans, en bonne santé stable ; ma créatininémie était à 71 µmol/L l'an dernier.
+      irrelevant: Je suis un homme de 50 ans, boulanger à Tlemcen, et j'aime beaucoup le jardinage et la pêche le week-end.
