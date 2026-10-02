@@ -92,11 +92,23 @@ def generate(model, tokenizer, prompt_text, n_samples=0, seed=None):
     return list(zip(texts, truncated, strict=True))
 
 
+def check_finite(model, tokenizer, prompt_text):
+    """Stop early if the chosen dtype overflows (NaN/inf logits), e.g. Gemma in float16."""
+    inputs = tokenizer(prompt_text, return_tensors="pt").to(model.device)
+    with torch.no_grad():
+        logits = model(**inputs).logits
+    assert torch.isfinite(logits).all(), (
+        "NaN/inf in logits: this dtype is broken for this model. "
+        "Retry with --dtype float32 --device-map auto (uses both T4 GPUs)."
+    )
+
+
 def write_meta(meta_path, args, model):
     meta = {
         "model_id": args.model_id,
         "revision": args.revision,
         "dtype": args.dtype,
+        "device_map": args.device_map,
         "n_parameters_loaded": sum(p.numel() for p in model.parameters()),
         "thinking": "off",
         "greedy": True,
@@ -121,13 +133,17 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--prompts", default=ROOT / "data" / "prompts.jsonl", type=Path)
     parser.add_argument("--out", required=True, type=Path)
-    parser.add_argument("--meta", default=ROOT / "results" / "run_meta.json", type=Path)
+    parser.add_argument("--meta", type=Path, help="default: <out>_meta.json next to --out")
     parser.add_argument("--model-id", default="Qwen/Qwen3.5-4B")
     parser.add_argument("--revision", default="851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a")
     parser.add_argument("--dtype", default="float16", choices=["float16", "bfloat16", "float32"])
+    parser.add_argument(
+        "--device-map", default="cuda:0", help='"auto" splits the model over all GPUs'
+    )
     parser.add_argument("--n-samples", default=10, type=int)
     parser.add_argument("--limit", type=int, help="only the first N prompts (quick test)")
     args = parser.parse_args()
+    args.meta = args.meta or args.out.with_name(args.out.stem + "_meta.json")
 
     prompts = load_prompts(args.prompts, args.limit)
     done = load_done(args.out)
@@ -141,9 +157,10 @@ def main():
         args.model_id,
         revision=args.revision,
         dtype=getattr(torch, args.dtype),
-        device_map="cuda:0",
+        device_map=args.device_map,
     )
     model.eval()
+    check_finite(model, tokenizer, build_prompt_text(tokenizer, todo[0]))
     write_meta(args.meta, args, model)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)

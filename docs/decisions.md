@@ -223,3 +223,20 @@ creatinine and glucose (units change too); the realistic report format was
 preferred. The clean language comparison uses the 8 cases with identical
 units. Also: "reference range:" (EN) vs "VR :" (FR) differ in explicitness;
 the prompt-wording variants (next step) address this.
+
+## D16 — Second model: MedGemma 1.5 4B, same settings as Qwen (2026-10-02)
+
+**Decision.** `google/medgemma-1.5-4b-it` (revision 91850547d9f0b2fdd21aa7c5f4f3d1a8a52c243b,
+4.30B parameters, gated) runs on the same 144 prompts with the same greedy +
+10 samples and the same sampling settings as Qwen. float16 first; if its
+logits are NaN/inf (known risk for Gemma in fp16), float32 split over both T4s.
+`run_model.py` now checks logits before the run and writes one meta file per
+output (`<out>_meta.json`).
+
+**Why.** Same settings keep the comparison controlled: a difference between
+models cannot come from different sampling. Deadline (2 days) moved the prompt
+wording variants to "if time allows".
+
+**Reviewer question.** "MedGemma has its own recommended sampling settings —
+why not use them?" — We compare models under identical decoding; greedy (the
+primary result) has no sampling settings at all.
