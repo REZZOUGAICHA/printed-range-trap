@@ -1,0 +1,27 @@
+# Python / uv
+__pycache__/
+*.py[cod]
+.venv/
+.ruff_cache/
+.pytest_cache/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Secrets — the HF token lives in Kaggle Secrets / env vars, never in the repo
+.env
+*.token
+
+# Model weights / HF cache (link to HF instead of committing weights)
+*.safetensors
+*.bin
+hf_cache/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Local assistant config (not part of the project)
+CLAUDE.md
+.claude/
