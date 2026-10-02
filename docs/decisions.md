@@ -157,3 +157,25 @@ prompt id (not its position) stay the same when a run is resumed or reordered.
 **Reviewer question.** "Are sampled runs exactly what chatbot users get?" —
 Close, not identical: no presence_penalty, and GPU arithmetic is not fully
 deterministic. Stated in run_meta.json and the limitations.
+
+## D13 — Pilot shows a signal: proceed to Phase 2 (2026-10-02)
+
+**Result.** Qwen3.5-4B, 4 cases, EN, greedy + 10 samples (264 answers, 0 parse
+failures, 0 truncated, 4.2 GPU-minutes). Relevant context, range not printed vs
+printed — correct samples out of 10:
+HB_PREG 10 → 0, FER_CRP 10 → 1, FER_F 10 → 6, CREA_TREND: no trap (the model
+spots the AKI but answers NEEDS_FOLLOW_UP with or without the range).
+Greedy fell into the trap on HB_PREG and FER_CRP; on FER_F only samples did (4/10).
+
+**Notable outputs.** HB_PREG printed: the model cites the 11.0 g/dL pregnancy
+cutoff and still says 11.3 is below it. FER_CRP printed: it notes ferritin is
+raised by inflammation and still answers NORMAL because 80 is within 15–150.
+
+**Decision.** Proceed. Added to the plan: clinician review by 2–3 doctors,
+2–3 prompt wordings for the range line, second model (MedGemma) required.
+
+**Caveats.** 4 cases only: shows the trap exists, not how often. Two gold
+answers are debatable (CREA_TREND accept set; FER_F no-context gold), sent to
+the doctors. Expected reviewer objection: "deferring to a lab's own range is
+sometimes right" — answer: in our cases the printed range is known not to
+apply (non-pregnant range in pregnancy, ferritin under inflammation).
