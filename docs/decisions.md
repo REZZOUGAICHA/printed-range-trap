@@ -106,3 +106,37 @@ settings avoids an arbitrary choice.
 **Reviewer question.** "Why 10?" — A cost/precision trade-off: short answers
 make 10 cheap, and it gives rates in steps of 10%. "Is presence_penalty
 supported in transformers?" — To verify when writing run_model.py.
+
+## D9 — FER_CRP: CRP moves from the lab line to the relevant context (2026-10-02)
+
+**Decision.** The FER_CRP lab line shows ferritin only. "CRP 60 mg/L" is part
+of the relevant context sentence (rheumatoid arthritis flare).
+
+**Why.** If CRP 60 is always on the lab line, the model sees the inflammation
+even with no context, so the no-context gold (NORMAL) would be unfair and two
+things would change between variants. Moving CRP into the context keeps one
+factor per change.
+
+## D10 — Same identity in relevant and irrelevant context (2026-10-02)
+
+**Decision.** Relevant and irrelevant sentences start with the same identity
+("I am a 28-year-old woman ...") and have the same word count (±1).
+CREA_TREND gets "55-year-old man" (not specified in the original plan; the
+KDIGO creatinine-rise criterion does not depend on age or sex).
+
+**Why.** Then relevant vs irrelevant differ only in medical information. If
+only the relevant sentence had age/sex, a verdict change could be caused by
+the demographics or by sentence length, not by the clinical facts.
+
+**Reviewer question.** "The 'none' level has no identity at all — is it
+comparable?" — It is the realistic "just the report" setting; the clean
+comparison for context effects is relevant vs irrelevant.
+
+## D11 — Pilot uses greedy + 10 samples (2026-10-02)
+
+**Decision.** The pilot (4 cases × 6 variants = 24 prompts, EN) runs greedy
+and 10 sampled answers per prompt, not greedy only.
+
+**Why.** In the Phase 0 smoke test, greedy escaped the trap on FER_F with
+relevant context. A greedy-only pilot could miss a trap that appears in a
+fraction of sampled answers. Extra cost is small (short answers).

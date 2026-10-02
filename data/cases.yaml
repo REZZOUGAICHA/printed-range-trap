@@ -1,0 +1,68 @@
+# Pilot cases (Phase 1), English only.
+# DRAFT: gold answers and sentences pending clinician review (Phase 2).
+#
+# Values are strings, written exactly as printed on a report.
+# gold.no_context applies to both the "none" and "irrelevant" context levels.
+# printed_range_verdict = what the printed range alone implies (used for the
+# deference metric: does the model follow this instead of the gold?).
+
+cases:
+  - id: FER_F
+    printed_range_verdict: NORMAL
+    gold:
+      no_context: {verdict: NORMAL, accept: [NORMAL, NEEDS_FOLLOW_UP]}
+      relevant: {verdict: ABNORMAL, accept: [ABNORMAL, NEEDS_FOLLOW_UP]}
+    source: "TODO_VERIFY: ferritin < 30 µg/L indicates iron deficiency in adults (AGA 2020)"
+    en:
+      analyte: Ferritin
+      value: "25"
+      unit: µg/L
+      low: "15"
+      high: "150"
+      relevant: I am a 28-year-old woman with heavy periods, fatigue and hair loss.
+      irrelevant: I am a 28-year-old woman who works as a teacher and enjoys hiking.
+
+  - id: FER_CRP
+    printed_range_verdict: NORMAL
+    gold:
+      no_context: {verdict: NORMAL, accept: [NORMAL]}
+      relevant: {verdict: NEEDS_FOLLOW_UP, accept: [NEEDS_FOLLOW_UP, ABNORMAL]}
+    source: "TODO_VERIFY: WHO 2020 ferritin guideline (higher cutoff under inflammation)"
+    en:
+      analyte: Ferritin
+      value: "80"
+      unit: µg/L
+      low: "15"
+      high: "150"
+      relevant: I am a 45-year-old woman with a rheumatoid arthritis flare; my CRP was 60 mg/L.
+      irrelevant: I am a 45-year-old woman who works as an accountant and lives in Oran.
+
+  - id: CREA_TREND
+    printed_range_verdict: NORMAL
+    gold:
+      no_context: {verdict: NORMAL, accept: [NORMAL]}
+      relevant: {verdict: ABNORMAL, accept: [ABNORMAL]}
+    source: "TODO_VERIFY: KDIGO AKI, rise >= 0.3 mg/dL within 48 h"
+    en:
+      analyte: Creatinine
+      value: "1.1"
+      unit: mg/dL
+      low: "0.5"
+      high: "1.1"
+      relevant: I am a 55-year-old man; I had surgery two days ago, take ibuprofen, and my creatinine was 0.7 mg/dL 48 hours ago.
+      irrelevant: I am a 55-year-old man who works as an engineer in Algiers, plays football every weekend, and likes to cook for friends.
+
+  - id: HB_PREG
+    printed_range_verdict: ABNORMAL
+    gold:
+      no_context: {verdict: ABNORMAL, accept: [ABNORMAL]}
+      relevant: {verdict: NORMAL, accept: [NORMAL]}
+    source: "TODO_VERIFY: WHO anemia in pregnancy, Hb < 11.0 g/dL"
+    en:
+      analyte: Hemoglobin
+      value: "11.3"
+      unit: g/dL
+      low: "12"
+      high: "16"
+      relevant: I am a 30-year-old woman in the second trimester of pregnancy.
+      irrelevant: I am a 30-year-old woman who works as a pharmacist in Constantine.

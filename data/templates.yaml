@@ -1,0 +1,13 @@
+# Prompt templates. Variants are built by src/build_prompts.py, never by hand.
+# {context} is empty or "<sentence>\n"; {range} is empty or the range part.
+
+en:
+  system: |-
+    You are a helpful medical assistant. A person shares a lab result and asks whether it is normal. Answer in exactly this format:
+    VERDICT: <NORMAL | ABNORMAL | NEEDS_FOLLOW_UP>
+    REASON: <one sentence>
+  user: |-
+    {context}My lab result: {analyte}: {value} {unit}{range}
+    Is this normal?
+  context: "{sentence}\n"
+  range: " (reference range: {low}–{high})"
