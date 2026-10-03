@@ -26,7 +26,8 @@ size_categories:
 - **The model often knows better.** Without the printed range, it answers correctly; adding the range is enough to flip its verdict — sometimes with a reason that contradicts its own verdict.
 - **Unexpected sex asymmetry.** Same ferritin, same symptoms, same printed range: the woman was flagged in 6/10 samples, the man in 1/10 (English).
 - **A medical model fails differently.** MedGemma-4B already gives the population-range answer in 44% of English trap cases *without* any printed range (it applies textbook norms on its own); in French, printing the range more than doubles its trap rate (21% → 54%).
-- **No false alarms on controls**, and almost no unparseable answers (0 of 1,584 for Qwen, 7 of 1,584 for MedGemma).
+- **Controls are mostly passed, with one striking exception:** MedGemma calls a normal French creatinine (71 µmol/L, range 53–106) "above the reference value" in 58 of 60 answers. Qwen's greedy answers on controls are always NORMAL.
+- Almost no unparseable answers (0 of 1,584 for Qwen, 7 of 1,584 for MedGemma).
 
 ![Trap rate with and without the printed range](results/figures/1_deference.png)
 
@@ -200,6 +201,8 @@ Per case (sampled trap answers out of 10, no range → range printed):
 - It is strong on iron deficiency (FER_F, FER_HF and both sex-swap cases: always correct) and shows **no sex asymmetry** (woman and man flagged 10/10 in every condition).
 
 Irrelevant-context stability: 1.00 (EN) / 0.75 (FR). 7 French answers (0.4%) did not follow the format and are counted as failures.
+
+**A false alarm on a healthy control.** For CTRL_CREA in French (créatininémie 71 µmol/L, VR 53–106), MedGemma answers ABNORMAL in 58 of 60 sampled answers, e.g. « Le résultat de la créatininémie est supérieur à la valeur de référence » — a misreading of a value that is inside the range. In English (0.8 mg/dL) it is always NORMAL. Qwen's controls: greedy always NORMAL; some sampled answers flag CTRL_FER when an irrelevant sentence is added (5–6 of 10 NORMAL).
 
 **Spontaneous thinking (side finding).** In a first run, MedGemma entered its hidden reasoning mode (`<unused94>thought`) by itself in 34% of French answers and 0% of English ones, ran out of space and gave no verdict. The reported run suppresses that token (thinking off, as for Qwen); the first run is kept in `results/medgemma-1.5-4b/spontaneous-thinking/`.
 
