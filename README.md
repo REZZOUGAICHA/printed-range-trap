@@ -1,5 +1,6 @@
 ---
 pretty_name: The Printed-Range Trap
+license: cc-by-4.0
 language:
   - en
   - fr
@@ -33,19 +34,18 @@ size_categories:
 
 ---
 
-## 1. The blind spot
+## 1. The blind spot (Question 1)
 
-### Why this matters to me
+### Where the idea came from
 
-<!-- AICHA: replace this paragraph with your own story (5–10 sentences, first person):
-what happened with a lab report in Algeria, what the report said, what the reality was,
-and why it matters to you. -->
-*[Personal story — to be written by the author.]*
+This project started with my own lab report. For the past few weeks I had been losing hair and feeling tired all the time, so I had my vitamin D and ferritin measured. Both results came back at the lower limit of the reference range printed next to them, ranges so wide that they cover very different people and situations. When I asked ChatGPT about the report, it told me I had no deficiency in either: the values were inside the printed ranges. It did not weigh my symptoms against the numbers; the range on the paper was the answer.
+
+When I read the Fatima Fellowship question, asking for a blind spot drawn from our own lived experience, I immediately thought of that conversation. In Algeria, lab reports print one population range per test, in French, and more and more people ask chatbots to read them. Ferritin is the textbook example: the guidelines I later checked say that a ferritin below 30 µg/L usually means low iron stores, yet a common printed lower limit is 20. A model that trusts the printed range over the person gives exactly the reassurance I received. So I set out to test, systematically, whether small open models fall into this trap.
 
 ### The problem
 
 Every lab report prints a reference range next to the value, for example
-`Ferritine : 25 µg/L (VR : 15 – 150)`. That range describes a general population. It does not know that the patient is pregnant, has heavy periods, an inflammatory flare, heart failure, or a creatinine that doubled in two days. In all of these situations, a value **inside** the printed range can be abnormal, and a value **outside** it can be normal.
+`Ferritine : 25 µg/L (VR : 15 – 150)`. That range describes a general population. It does not know that the patient is pregnant, has heavy periods, an inflammatory flare, heart failure, or a creatinine that rose sharply in two days. In all of these situations, a value **inside** the printed range can be abnormal, and a value **outside** it can be normal.
 
 People increasingly paste their lab results into chatbots, and clinical RAG systems receive exactly this input. If a model judges the value against the printed range and ignores the person, it gives false reassurance, or false alarm, at scale.
 
@@ -57,7 +57,7 @@ Medical QA benchmarks test knowledge with exam-style questions. Closer work test
 
 This study asks a different question: **when a range is printed on the report — as it always is — does it override the model's reasoning about the patient?** We call this *range deference*. Prior work tests range *retrieval*; we test range *deference*, in the realistic setting.
 
-## 2. Models
+## 2. Model choice (Question 2)
 
 | Model | Role | Parameters | Precision | Why |
 |---|---|---|---|---|
@@ -67,7 +67,12 @@ This study asks a different question: **when a range is printed on the report �
 Thinking mode is **off** (Qwen3.5's default is on; we disable it to match typical chatbot use).
 *MedGemma produced NaN/inf logits in float16 on a T4 GPU, so it runs in float32 across two GPUs.
 
-## 3. Evaluation design
+**Why these two.**
+- **Qwen3.5-4B** is a small member of a current frontier open-weight model family, so its behaviour is a reasonable proxy for the chatbots people actually use, while fitting on a free GPU. It is multilingual, and French matters here: it is the language of Algerian lab reports.
+- **MedGemma 1.5 4B** is the obvious objection to the first result ("use a medical model"). Testing a medical model of the same size answers it directly: does domain training protect against the trap? (It does not; it fails in a different way.)
+- Both are within the 0.6–6B limit, are open-weight on Hugging Face, and are pinned to an exact revision for reproducibility.
+
+## 3. Evaluation design (Question 2)
 
 ### Counterfactual variants: one factor changes at a time
 
@@ -104,6 +109,7 @@ The model must answer `VERDICT: NORMAL | ABNORMAL | NEEDS_FOLLOW_UP` and one sen
 | ALP_TEEN (reverse) | ALP 280 U/L (40–130) | Boy, 14, growth spurt | NORMAL | Paediatric ranges: 114–375 U/L at 14 |
 | CTRL_FER, CTRL_CREA | In range | Healthy / stable | NORMAL | Controls |
 
+- **How the data was made.** The 12 cases are synthetic vignettes designed by the author from published guideline thresholds (no real patient data). Sentence drafting, French versions and code were done with the help of an AI assistant (Claude); every gold answer was then checked against the guideline text. Prompts are generated from the cases by code, and all model answers come from the two evaluated models.
 - **Reverse cases** (context makes a flagged value acceptable) show that we measure reasoning, not "the model gets more alarmed when context is added".
 - **Gold answers** were checked against the guideline texts, with exact quotes, in [`data/sources.md`](data/sources.md): 10 cases supported, 2 partly supported (accept sets widened accordingly), none contradicted. Where guidelines disagree (e.g. the 0.92 g/L glucose threshold in the first trimester), both ABNORMAL and NEEDS_FOLLOW_UP are accepted.
 - **Clinician review** by independent doctors, blind to our answers, is in progress ([`docs/doctor_review/`](docs/doctor_review/)).
@@ -125,7 +131,7 @@ The model must answer `VERDICT: NORMAL | ABNORMAL | NEEDS_FOLLOW_UP` and one sen
 
 95% CIs are bootstrap intervals over cases.
 
-## 4. Results
+## 4. Results (Question 2)
 
 ### Qwen3.5-4B
 
@@ -219,7 +225,7 @@ Irrelevant-context stability: 1.00 (EN) / 0.75 (FR). 7 French answers (0.4%) did
 - **Decoding.** Qwen's recommended `presence_penalty` is not supported by `transformers.generate()` and was omitted; Qwen ran in float16, MedGemma in float32 (float16 overflowed on the T4); MedGemma's thinking-start token was suppressed.
 - **Two models**, both ~4B. The effect may differ for other families and sizes.
 
-## 6. Path forward
+## 6. Path forward (Question 3)
 
 - **Data:** counterfactual training pairs where context changes the correct answer, including reverse cases, so the model learns that the printed range is one input, not the answer.
 - **Fine-tuning:** teach the model to ask for the missing context ("are you pregnant?", "any recent results?") instead of reassuring from the range alone.
@@ -265,3 +271,11 @@ Exact model revisions, library versions, seeds and settings are saved next to ea
 | `results/figures/` | All figures |
 | `docs/decisions.md` | Decision log: every design choice and why |
 | `docs/doctor_review/` | Blind clinician review form (French) |
+
+## License
+
+- **Data and results** (`data/`, `results/`, `docs/`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) — free to reuse with attribution.
+- **Code** (`src/`, `notebooks/`): [MIT](LICENSE).
+- The evaluated models keep their own licences (Qwen3.5: Apache-2.0; MedGemma: Health AI Developer Foundations terms); no model weights are redistributed here.
+
+Citation: Aicha Rezzoug (2026). *The Printed-Range Trap: Do Small LLMs Defer to Lab Reference Ranges Over Patient Context?* https://huggingface.co/aicharzg
