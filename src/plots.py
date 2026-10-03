@@ -57,6 +57,10 @@ def model_name(path):
     return path.stem.removeprefix("generations_")
 
 
+def short_name(model):
+    return {"qwen3.5-4b": "Qwen3.5-4B", "medgemma-1.5-4b": "MedGemma-4B"}.get(model, model)
+
+
 def style_axis(ax):
     ax.yaxis.grid(True, color=GRID, linewidth=0.8)
     ax.set_axisbelow(True)
@@ -65,7 +69,7 @@ def style_axis(ax):
 
 def plot_deference(datasets):
     """Grouped bars: trap rate (relevant context) without vs with the printed range."""
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4.2), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.8), sharey=True)
     for ax, run in zip(axes, ("greedy", "sampled"), strict=True):
         groups = [(m, lang) for m, res in datasets for lang in sorted({k[1] for k in res})]
         width = 0.36
@@ -93,7 +97,7 @@ def plot_deference(datasets):
                     x, hi + 0.03, f"{mean:.0%}", ha="center", va="bottom", fontsize=8.5, color=TEXT
                 )
         ax.set_xticks(range(len(groups)))
-        ax.set_xticklabels([f"{m}\n{lang.upper()}" for m, lang in groups])
+        ax.set_xticklabels([f"{short_name(m)}\n{lang.upper()}" for m, lang in groups])
         ax.set_ylim(0, 1.12)
         ax.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1.0))
         ax.set_title(
@@ -104,9 +108,9 @@ def plot_deference(datasets):
         )
         style_axis(ax)
     axes[0].set_ylabel("Answers that follow the printed range\n(patient context given)")
-    axes[0].legend(frameon=False, loc="upper left")
+    axes[0].legend(frameon=False, loc="lower left", bbox_to_anchor=(0, 1.08), ncol=2)
     fig.suptitle(
-        "Printing the reference range makes the model ignore patient context",
+        "With the reference range printed, answers follow it instead of the patient",
         x=0.01,
         ha="left",
         fontsize=12,
@@ -179,8 +183,9 @@ def plot_heatmap(records, model, lang):
     cbar.set_label("Sampled answers correct", color=TEXT_2)
     cbar.outline.set_visible(False)
     ax.set_title(
-        f"{model}, {lang.upper()}: correct answers per case and condition\n",
+        f"{short_name(model)}, {lang.upper()}: correct answers per case and condition",
         loc="left",
+        pad=30,
         fontsize=11,
         fontweight="bold",
         color=TEXT,
@@ -202,9 +207,10 @@ def plot_heatmap(records, model, lang):
 
 def plot_sex_swap(datasets_records):
     """Share of sampled answers flagged (ABNORMAL or NEEDS_FOLLOW_UP), woman vs man, same everything else."""
-    rows = []
+    panels = []
     for model, records in datasets_records:
         idx = index(records)
+        rows = []
         for lang in sorted({r["language"] for r in records}):
             for rng_level in ("none", "printed"):
                 vals = {}
@@ -214,31 +220,39 @@ def plot_sex_swap(datasets_records):
                         s = cell["samples"]
                         vals[sex] = sum(v in ("ABNORMAL", "NEEDS_FOLLOW_UP") for v in s) / len(s)
                 if len(vals) == 2:
-                    label = f"{model} {lang.upper()}\n{'no range' if rng_level == 'none' else 'range printed'}"
+                    label = (
+                        f"{lang.upper()}\n{'no range' if rng_level == 'none' else 'range printed'}"
+                    )
                     rows.append((label, vals))
-    if not rows:
+        if rows:
+            panels.append((model, rows))
+    if not panels:
         return None
-    fig, ax = plt.subplots(figsize=(max(6, 1.3 * len(rows)), 4))
-    width = 0.36
-    for i, (label, vals) in enumerate(rows):
-        for j, (sex, color) in enumerate((("Woman", NOT_PRINTED), ("Man", PRINTED))):
-            x = i + (j - 0.5) * (width + 0.02)
-            ax.bar(x, vals[sex], width, color=color, label=sex if i == 0 else None)
-            ax.text(x, vals[sex] + 0.02, f"{vals[sex]:.0%}", ha="center", fontsize=8.5)
-    ax.set_xticks(range(len(rows)))
-    ax.set_xticklabels([r[0] for r in rows], fontsize=8.5)
-    ax.set_ylim(0, 1.12)
-    ax.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1.0))
-    ax.set_ylabel("Sampled answers flagging the result")
-    ax.legend(frameon=False, loc="upper left", bbox_to_anchor=(1.0, 1.0))
-    ax.set_title(
+
+    fig, axes = plt.subplots(1, len(panels), figsize=(5.2 * len(panels), 4.4), sharey=True)
+    axes = axes if len(panels) > 1 else [axes]
+    width = 0.38
+    for ax, (model, rows) in zip(axes, panels, strict=True):
+        for i, (_, vals) in enumerate(rows):
+            for j, (sex, color) in enumerate((("Woman", NOT_PRINTED), ("Man", PRINTED))):
+                x = i + (j - 0.5) * (width + 0.03)
+                ax.bar(x, vals[sex], width, color=color, label=sex if i == 0 else None)
+                ax.text(x, vals[sex] + 0.02, f"{vals[sex]:.0%}", ha="center", fontsize=8)
+        ax.set_xticks(range(len(rows)))
+        ax.set_xticklabels([r[0] for r in rows], fontsize=8.5)
+        ax.set_ylim(0, 1.15)
+        ax.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1.0))
+        ax.set_title(short_name(model), loc="left", fontsize=10.5, color=TEXT)
+        style_axis(ax)
+    axes[0].set_ylabel("Sampled answers flagging the result")
+    axes[0].legend(frameon=False, loc="lower left", bbox_to_anchor=(0, 1.08), ncol=2)
+    fig.suptitle(
         "Same ferritin, same symptoms, same range: only woman/man changes",
-        loc="left",
-        fontsize=11,
+        x=0.01,
+        ha="left",
+        fontsize=12,
         fontweight="bold",
-        color=TEXT,
     )
-    style_axis(ax)
     fig.tight_layout()
     out = FIG_DIR / "3_sex_swap.png"
     fig.savefig(out, dpi=200, bbox_inches="tight")

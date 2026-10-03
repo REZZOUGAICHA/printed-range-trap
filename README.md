@@ -19,13 +19,14 @@ size_categories:
 
 > This is an evaluation study, not a medical tool. All cases are synthetic; no real patient data is used.
 
-## Key findings (Qwen3.5-4B)
+## Key findings
 
 - **The printed range overrides patient context.** In 9 cases where the patient's situation changes the correct answer, the model gave the answer implied by the printed range **10% → 50%** of the time (English) and **7% → 59%** (French) when the range was added, across 10 sampled answers per question.
 - **French reports are worse.** With the range printed, the greedy answer followed it in **78%** of trap cases in French vs **44%** in English. French is the language of real Algerian lab reports.
 - **The model often knows better.** Without the printed range, it answers correctly; adding the range is enough to flip its verdict — sometimes with a reason that contradicts its own verdict.
 - **Unexpected sex asymmetry.** Same ferritin, same symptoms, same printed range: the woman was flagged in 6/10 samples, the man in 1/10 (English).
-- **No false alarms on controls**, and 0 unparseable answers out of 1,584.
+- **A medical model fails differently.** MedGemma-4B already gives the population-range answer in 44% of English trap cases *without* any printed range (it applies textbook norms on its own); in French, printing the range more than doubles its trap rate (21% → 54%).
+- **No false alarms on controls**, and almost no unparseable answers (0 of 1,584 for Qwen, 7 of 1,584 for MedGemma).
 
 ![Trap rate with and without the printed range](results/figures/1_deference.png)
 
@@ -174,9 +175,35 @@ Without the printed range, the same prompt gave `NEEDS_FOLLOW_UP`.
 
 Same value, symptoms and printed range; only "woman"/"man" changes. Without a range both are always flagged; with the range printed, the woman is flagged 6/10 and the man 1/10 (EN), 6/10 vs 3/10 (FR). In its reasons, the model invokes iron needs "for a woman", while the man's value is "within the normal reference range… despite your symptoms". This is **one pair of cases**: a signal worth testing, not a measured bias.
 
-### MedGemma 1.5 4B
+### MedGemma 1.5 4B (medical model, same size)
 
-*[Pending — run in progress.]*
+| Metric (9 trap cases, relevant context) | EN, no range | EN, range printed | FR, no range | FR, range printed |
+|---|---|---|---|---|
+| Trap rate, greedy | 44% | 56% | 22% | 56% |
+| Trap rate, 10 samples | 44% [11–78] | 50% [17–78] | 21% [0–49] | **54%** [22–88] |
+| Correct, 10 samples | 56% | 50% | 78% | 44% |
+
+Per case (sampled trap answers out of 10, no range → range printed):
+
+| Case | English | French |
+|---|---|---|
+| FER_CRP | 10 → 10 | 1 → **10** |
+| CREA_TREND | 0 → 5 | 0 → **10** |
+| HB_PREG | 10 → 10 | 0 → **10** |
+| ALP_TEEN | 10 → 10 | 10 → 10 |
+| GLY_PREG | 10 → 10 | 8 → 9 |
+| FER_F, FER_SEX_F, FER_SEX_M, FER_HF | 0 → 0 | 0 → 0 |
+
+**Two different failure modes.**
+- In **English**, MedGemma is often wrong *before* any range is printed: for HB_PREG it answers ABNORMAL with no range ("Hemoglobin levels below 11 g/dL in the second trimester are generally considered low…" — for a value of 11.3). It applies population norms by itself, so printing the range changes little.
+- In **French**, it knows the right answer without the range in most cases (78% correct), and the printed range flips three cases completely (FER_CRP, CREA_TREND, HB_PREG: 0–1 → 10 out of 10).
+- It is strong on iron deficiency (FER_F, FER_HF and both sex-swap cases: always correct) and shows **no sex asymmetry** (woman and man flagged 10/10 in every condition).
+
+Irrelevant-context stability: 1.00 (EN) / 0.75 (FR). 7 French answers (0.4%) did not follow the format and are counted as failures.
+
+**Spontaneous thinking (side finding).** In a first run, MedGemma entered its hidden reasoning mode (`<unused94>thought`) by itself in 34% of French answers and 0% of English ones, ran out of space and gave no verdict. The reported run suppresses that token (thinking off, as for Qwen); the first run is kept in `results/medgemma-1.5-4b/spontaneous-thinking/`.
+
+![Per-case results, MedGemma, French](results/figures/2_heatmap_medgemma-1.5-4b_fr.png)
 
 ## 5. Limitations
 
@@ -186,7 +213,8 @@ Same value, symptoms and printed range; only "woman"/"man" changes. Without a ra
 - **One prompt format** and one wording of the range line per language. The trap may be weaker or stronger with other wordings.
 - **Language vs units.** For creatinine and glucose, English and French reports also use different units (realistic, but not a pure language change). Ferritin, haemoglobin and ALP cases use identical units.
 - **GLY_PREG** in English is wrong even without the range (the model does not apply the pregnancy threshold): a knowledge gap, not deference.
-- **Decoding.** Qwen's recommended `presence_penalty` is not supported by `transformers.generate()` and was omitted; Qwen ran in float16, MedGemma in float32.
+- **Decoding.** Qwen's recommended `presence_penalty` is not supported by `transformers.generate()` and was omitted; Qwen ran in float16, MedGemma in float32 (float16 overflowed on the T4); MedGemma's thinking-start token was suppressed.
+- **Two models**, both ~4B. The effect may differ for other families and sizes.
 
 ## 6. Path forward
 
@@ -204,17 +232,20 @@ Requirements: [uv](https://docs.astral.sh/uv/), and a GPU for inference (we used
 uv run python src/build_prompts.py --languages en fr
 
 # Inference (GPU) — resumable; see notebooks/kaggle_run.ipynb for the Kaggle version
-python src/run_model.py --out results/generations_qwen3.5-4b.jsonl
+python src/run_model.py --out results/qwen3.5-4b/generations_qwen3.5-4b.jsonl
 python src/run_model.py --model-id google/medgemma-1.5-4b-it \
     --revision 91850547d9f0b2fdd21aa7c5f4f3d1a8a52c243b \
-    --dtype float32 --device-map auto --out results/generations_medgemma-1.5-4b.jsonl
+    --dtype float32 --device-map auto --suppress-tokens "<unused94>" \
+    --out results/medgemma-1.5-4b/generations_medgemma-1.5-4b.jsonl
 
 # Metrics and figures (CPU)
-uv run python src/metrics.py results/generations_*.jsonl
-uv run python src/plots.py results/generations_qwen3.5-4b.jsonl results/generations_medgemma-1.5-4b.jsonl
+Q=results/qwen3.5-4b/generations_qwen3.5-4b.jsonl
+M=results/medgemma-1.5-4b/generations_medgemma-1.5-4b.jsonl
+uv run python src/metrics.py $Q $M
+uv run python src/plots.py $Q $M
 ```
 
-Exact model revisions, library versions, seeds and settings are saved next to each run (`results/*_meta.json`).
+Exact model revisions, library versions, seeds and settings are saved next to each run (`results/<model>/*_meta.json`).
 
 ## 8. Files
 
@@ -226,6 +257,8 @@ Exact model revisions, library versions, seeds and settings are saved next to ea
 | `data/sources.md` | Guideline sources with exact quotes, per case |
 | `src/` | `build_prompts.py`, `run_model.py`, `metrics.py`, `plots.py` |
 | `notebooks/kaggle_run.ipynb` | Kaggle wrapper for inference |
-| `results/` | Raw generations, run metadata, metrics CSVs, figures (`*_pilot*` = Phase 1 pilot) |
+| `results/qwen3.5-4b/` | Qwen generations (1,584 answers), run metadata, metrics; `pilot/` = Phase 1 pilot |
+| `results/medgemma-1.5-4b/` | MedGemma generations, metadata, metrics; `spontaneous-thinking/` = discarded first run |
+| `results/figures/` | All figures |
 | `docs/decisions.md` | Decision log: every design choice and why |
 | `docs/doctor_review/` | Blind clinician review form (French) |

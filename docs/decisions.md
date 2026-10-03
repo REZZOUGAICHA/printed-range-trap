@@ -334,3 +334,24 @@ Keeping the run would make a third of the French answers format failures.
 **Finding worth reporting.** MedGemma entered its thinking mode by itself for
 French prompts only — a language-dependent behaviour change, separate from
 the trap.
+
+## D21 — MedGemma results; results organised by model (2026-10-03)
+
+**Run.** MedGemma 1.5 4B, float32 over 2×T4, `<unused94>` suppressed (D20):
+1,584 answers, 0 thinking traces, 7 format failures (French, 0.4 %).
+
+**Results (9 trap cases, relevant context, sampled trap rate, no range → printed):**
+EN 44% → 50%; FR 21% → 54%. Two failure modes: in English MedGemma is
+often wrong *before* any range is printed (applies population norms itself,
+e.g. HB_PREG, ALP_TEEN, GLY_PREG, FER_CRP), so the range adds little; in
+French it is mostly right without the range (78 % correct) and the printed
+range flips FER_CRP, CREA_TREND and HB_PREG to 10/10 trap answers. Always
+correct on FER_F, FER_HF and the sex-swap pair; no sex asymmetry.
+H4 ("a medical model is not less deferential") holds: MedGemma's trap rate
+with the range printed is similar to Qwen's (50–54 % vs 50–59 %).
+
+**Organisation.** `results/<model>/` holds each model's generations, meta and
+metrics; `qwen3.5-4b/pilot/` the Phase 1 pilot; `medgemma-1.5-4b/
+spontaneous-thinking/` the discarded first run. The Kaggle notebook writes to
+the same paths and now always re-clones the repo (a stale copy had silently
+kept old code).
