@@ -22,10 +22,10 @@ size_categories:
 
 ## Key findings
 
-- **The printed range overrides patient context.** In 9 cases where the patient's situation changes the correct answer, the model gave the answer implied by the printed range **10% → 50%** of the time (English) and **7% → 59%** (French) when the range was added, across 10 sampled answers per question.
-- **French reports are worse.** With the range printed, the greedy answer followed it in **78%** of trap cases in French vs **44%** in English. French is the language of real Algerian lab reports.
+- **The printed range overrides patient context.** In 9 cases where the patient's situation changes the correct answer, Qwen3.5-4B gave the answer implied by the printed range **10% → 50%** of the time (English) and **7% → 59%** (French) when the range was added, across 10 sampled answers per question.
+- **French reports are worse.** With the range printed, Qwen's greedy answer followed it in **78%** of trap cases in French vs **44%** in English; MedGemma's French trap rate also rises sharply when the range is printed (see below). French is the language of real Algerian lab reports.
 - **The model often knows better.** Without the printed range, it answers correctly; adding the range is enough to flip its verdict — sometimes with a reason that contradicts its own verdict.
-- **Unexpected sex asymmetry.** Same ferritin, same symptoms, same printed range: the woman was flagged in 6/10 samples, the man in 1/10 (English).
+- **Unexpected sex asymmetry.** Same ferritin, same symptoms, same printed range: Qwen flagged the woman in 6/10 samples and the man in 1/10 (English). MedGemma flagged both 10/10.
 - **A medical model fails differently.** MedGemma-4B already gives the population-range answer in 44% of English trap cases *without* any printed range (it applies textbook norms on its own); in French, printing the range more than doubles its trap rate (21% → 54%).
 - **Controls are mostly passed, with one striking exception:** MedGemma calls a normal French creatinine (71 µmol/L, range 53–106) "above the reference value" in 58 of 60 answers. Qwen's greedy answers on controls are always NORMAL.
 - Almost no unparseable answers (0 of 1,584 for Qwen, 7 of 1,584 for MedGemma).
@@ -51,11 +51,14 @@ People increasingly paste their lab results into chatbots, and clinical RAG syst
 
 ### Why standard benchmarks miss it, and how this differs from prior work
 
-Medical QA benchmarks test knowledge with exam-style questions. Closer work tests whether models **know** context-specific ranges:
-- **LabQAR** (medRxiv, 2025): a dataset testing whether LLMs know context-specific reference ranges.
-- **Lab-AI** (arXiv 2409.18986): retrieval of personalised ranges from age/sex factors.
+Medical QA benchmarks test knowledge with exam-style questions, where the answer does not depend on a misleading cue in the input. Closer work:
+- **Knowing the right range.** [LabQAR](https://www.medrxiv.org/content/10.1101/2025.06.03.25328882v1.full) (medRxiv 2025) tests whether LLMs know context-specific reference ranges (550 ranges, 363 tests); [Lab-AI](https://arxiv.org/abs/2409.18986) (2024) and [LAB-KG](https://aclanthology.org/2025.neusymbridge-1.5/) (2025) retrieve personalised ranges or patient knowledge to improve interpretation.
+- **Reasoning about context in lab tests.** [Bhasuran et al.](https://www.nature.com/articles/s41746-026-02632-3) (npj Digital Medicine 2026) evaluate causal reasoning on 99 lab-test scenarios (HbA1c, creatinine, vitamin D × age, sex, obesity, smoking) and find models weakest on counterfactual questions. A [JMIR 2024 study](https://www.jmir.org/2024/1/e56655) found GPT-4 answers to lab questions accurate but limited in contextual personalisation.
+- **Anchoring.** LLMs over-rely on a cue placed in the input: in diagnostic vignettes, LLMs kept a suggested anchor diagnosis first in 55.6% of answers vs 10–21% for physicians ([2026](https://pubmed.ncbi.nlm.nih.gov/42335861/)); identical clinical facts written in different registers change diagnoses ([Narrative Anchoring, 2026](https://arxiv.org/abs/2607.27384v1)); anchoring is widespread across LLM tasks ([2024](https://arxiv.org/abs/2412.06593)).
 
-This study asks a different question: **when a range is printed on the report — as it always is — does it override the model's reasoning about the patient?** We call this *range deference*. Prior work tests range *retrieval*; we test range *deference*, in the realistic setting.
+This study asks a different question: **when a range is printed on the report — as it always is — does it override the model's reasoning about the patient?** We call this *range deference*: a clinical anchoring effect whose anchor is not an artificial hint but a standard part of every lab report. Prior work tests whether models *know* the right range; we test whether a printed range makes them *stop using* what they know. To our knowledge, no prior work isolates the printed reference range as an anchor against patient context, or compares French and English report formats.
+
+Our results agree in direction with this literature: the printed range pulls 50–59% of answers to the range's verdict (vs 7–10% without it, Qwen), a magnitude similar to the diagnostic-anchoring study, and both models fail most where the context should change the answer.
 
 ## 2. Model choice (Question 2)
 
@@ -227,10 +230,26 @@ Irrelevant-context stability: 1.00 (EN) / 0.75 (FR). 7 French answers (0.4%) did
 
 ## 6. Path forward (Question 3)
 
-- **Data:** counterfactual training pairs where context changes the correct answer, including reverse cases, so the model learns that the printed range is one input, not the answer.
-- **Fine-tuning:** teach the model to ask for the missing context ("are you pregnant?", "any recent results?") instead of reassuring from the range alone.
-- **Architecture and tools:** a context-aware threshold tool that selects the guideline cutoff for the patient's situation; personalised reference intervals and reference change values from the patient's own history (which would catch CREA_TREND by design).
-- **Evaluation:** more cases per mechanism, several range wordings, more models, and the sex asymmetry tested on multiple pairs.
+The results point to where the fix must act: both models usually know the context-specific rule (correct without the printed range), but the range overrides it, more in French. The problem is less missing knowledge than *how the model weighs a printed number against the person*.
+
+**1. Data curation**
+- **Counterfactual pairs as training data.** The same report with and without the patient context, where the correct answer changes, in both directions (reverse cases such as pregnancy haemoglobin, so the model does not simply learn "be more alarmed").
+- **Real local formats.** French and Arabic reports in Algerian conventions (`VR :`, µmol/L, g/L, comma decimals): French was the worst condition for both models, and MedGemma misread a normal French creatinine as high.
+- **Guideline-grounded labels.** Each target answer tied to a quoted guideline threshold (as in `data/sources.md`), so the model learns *which* rule applies, not just the label.
+
+**2. Fine-tuning paradigm**
+- **Teach the model to treat the printed range as one input, not the answer:** preference tuning (e.g. DPO) on pairs where the preferred answer uses the patient's context and the rejected one repeats the range.
+- **Teach it to ask instead of reassure:** when context that changes the interpretation is missing ("are you pregnant?", "any recent result to compare?"), the preferred answer asks or says NEEDS_FOLLOW_UP rather than NORMAL.
+- **Consistency between reason and verdict:** reward answers whose verdict matches their own reasoning (Qwen wrote "suggests iron deficiency" and answered NORMAL).
+
+**3. Architecture and tools**
+- **A context-aware threshold tool.** The model extracts the patient's situation (pregnancy and trimester, inflammation, heart failure, age), and a deterministic lookup returns the guideline cutoff that applies; the model explains, the tool decides the threshold. Work on narrative anchoring found that instructions alone only partly remove anchoring while structured fact extraction removes it almost fully, which suggests a prompt fix will not be enough here either.
+- **Personal reference intervals and reference change values** from the patient's own history, which would catch a rising creatinine (CREA_TREND) that a population range hides by design.
+
+**4. Next steps for this evaluation**
+- Blind clinician review of all gold answers (form sent to doctors; agreement will be reported as kappa).
+- More cases per mechanism (25–40 trap cases), 2–3 wordings of the range line, more model families and sizes, and the sex asymmetry tested on several pairs.
+- Test the cheapest mitigations on the same pipeline: a system prompt stating that printed ranges are population ranges, and the threshold-tool design above.
 
 ## 7. Reproduce
 
