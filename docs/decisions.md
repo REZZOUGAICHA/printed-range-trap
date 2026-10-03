@@ -267,3 +267,70 @@ Irrelevant-context stability also lower in FR (0.79 vs 0.96).
 
 **Caveats.** 9 trap cases → wide CIs; gold answers not yet clinician-reviewed;
 one prompt wording; one model so far.
+
+## D18 — Gold answers verified against published guidelines (2026-10-03)
+
+**Decision.** Every gold answer was checked against the guideline it relies on,
+with exact quotes from the fetched documents (`data/sources.md`, sources S1–S17).
+Result: 10 cases supported, 2 partly supported (FER_CRP, GLY_PREG), none
+contradicted. No gold answer or accept set changed, so prompts, model runs and
+metrics are unchanged; only the citations in `cases.yaml` were replaced.
+
+**Corrections to the original plan's citations.**
+- Ferritin < 30 µg/L: cite BSG 2021 (Snook et al., Gut), not AGA 2020 —
+  AGA uses 45 ng/mL and only in anaemic patients.
+- Pregnancy haemoglobin: cite WHO 2024 (second trimester < 105 g/L) as well as
+  WHO 2011 (< 110 g/L); 11.3 g/dL is normal under both.
+- ALP in a 14-year-old boy: Labcorp (114–375 IU/L) and CALIPER-based ranges
+  (116–468 U/L); the CALIPER table itself is paywalled.
+
+**Partly supported, kept as is.**
+- FER_CRP: NEEDS_FOLLOW_UP is the best answer (BSG: ferritin can look normal in
+  inflammation); ABNORMAL accepted as secondary (80 is just above WHO's < 70).
+- GLY_PREG: IADPSG, WHO 2013 and CNGOF/SFD support ABNORMAL in early pregnancy,
+  but CNGOF notes the threshold "n'a pas été évaluée au premier trimestre",
+  ADA uses ≥ 110 mg/dL early on, and Zhu 2013 argues against it →
+  NEEDS_FOLLOW_UP also accepted; NORMAL is supported by no source.
+
+**Open (Aicha to decide).** CREA_TREND: KDIGO's criteria are met outright, so
+ABNORMAL only is kept; KDIGO also says "clinical judgment is required", which
+could justify accepting NEEDS_FOLLOW_UP. This changes accuracy only, not the
+deference metric (the trap answer is NORMAL).
+
+**Reviewer question.** "Who decided the gold answers?" — Drafted from guideline
+thresholds, then verified against the guideline texts with quotes (this entry);
+independent clinician review in progress (D14).
+
+## D19 — CREA_TREND stays strict; MedGemma runs in float32 (2026-10-03)
+
+**CREA_TREND.** Aicha's decision: keep ABNORMAL as the only accepted answer
+with relevant context (KDIGO criteria met outright). The doctors' "other
+acceptable answers" box will show whether clinicians would also accept
+NEEDS_FOLLOW_UP; revisit then.
+
+**MedGemma precision.** In float16 on the T4, MedGemma's logits contained
+NaN/inf (the start-up check in run_model.py stopped the run). It runs in
+float32 split over both T4 GPUs (`--dtype float32 --device-map auto`).
+Qwen ran in float16 (its logits were finite). The two models therefore use
+different precisions; float32 is the more exact of the two, so this cannot
+explain MedGemma doing worse. Stated in the README.
+
+## D20 — MedGemma's spontaneous thinking is suppressed (2026-10-03)
+
+**Problem.** In the first MedGemma run, 269 of 792 French answers (34 %; 27 of
+72 greedy) started with MedGemma's thinking token (`<unused94>thought`), wrote
+a long reasoning trace, hit the 128-token limit and never gave a verdict.
+English: 0 such answers. The model card documents no switch for this mode.
+
+**Decision.** Rerun MedGemma with `<unused94>` in `suppress_tokens` (it can
+never be generated), i.e. thinking off — the same rule as Qwen
+(`enable_thinking=False`). The first run is kept as
+`results/generations_medgemma-1.5-4b_spontaneous-thinking.jsonl`.
+
+**Why not the alternatives.** Raising max_new_tokens would mix answers with
+and without thinking, breaking the EN/FR and Qwen/MedGemma comparisons.
+Keeping the run would make a third of the French answers format failures.
+
+**Finding worth reporting.** MedGemma entered its thinking mode by itself for
+French prompts only — a language-dependent behaviour change, separate from
+the trap.

@@ -1,5 +1,6 @@
 # Cases, English and French.
-# DRAFT: gold answers and sentences pending clinician review (doctor_review/, D14).
+# Gold answers verified against published guidelines (data/sources.md, D18);
+# clinician review pending (docs/doctor_review/, D14).
 #
 # Values are strings, written exactly as printed on a report.
 # gold.no_context applies to both the "none" and "irrelevant" context levels.
@@ -15,7 +16,7 @@ cases:
     gold:
       no_context: {verdict: NORMAL, accept: [NORMAL, NEEDS_FOLLOW_UP]}
       relevant: {verdict: ABNORMAL, accept: [ABNORMAL, NEEDS_FOLLOW_UP]}
-    source: "TODO_VERIFY: ferritin < 30 µg/L indicates iron deficiency in adults (AGA 2020)"
+    source: "BSG 2021 [S3]: ferritin < 30 µg/L = low iron stores. Verified, see data/sources.md"
     en:
       analyte: Ferritin
       value: "25"
@@ -38,7 +39,7 @@ cases:
     gold:
       no_context: {verdict: ABNORMAL, accept: [ABNORMAL, NEEDS_FOLLOW_UP]}
       relevant: {verdict: ABNORMAL, accept: [ABNORMAL, NEEDS_FOLLOW_UP]}
-    source: "TODO_VERIFY: same as FER_F. Sex-specific-range comparison (not H2); excluded from H1 (range agrees with gold)."
+    source: "BSG 2021 [S3]; male range 30–400 [S5][S6]. Not a trap case (range agrees with gold). Verified, see data/sources.md"
     en:
       analyte: Ferritin
       value: "25"
@@ -61,7 +62,7 @@ cases:
     gold:
       no_context: {verdict: NORMAL, accept: [NORMAL, NEEDS_FOLLOW_UP]}
       relevant: {verdict: ABNORMAL, accept: [ABNORMAL, NEEDS_FOLLOW_UP]}
-    source: "TODO_VERIFY: same as FER_F. H2 pair: identical to FER_SEX_M except the sex word (and FR grammatical agreement)."
+    source: "BSG 2021 [S3]. H2 pair with FER_SEX_M (only the sex word changes). Verified, see data/sources.md"
     en:
       analyte: Ferritin
       value: "25"
@@ -84,7 +85,7 @@ cases:
     gold:
       no_context: {verdict: NORMAL, accept: [NORMAL, NEEDS_FOLLOW_UP]}
       relevant: {verdict: ABNORMAL, accept: [ABNORMAL, NEEDS_FOLLOW_UP]}
-    source: "TODO_VERIFY: same as FER_F. H2 pair."
+    source: "BSG 2021 [S3]; male range 30–400 [S5][S6]. H2 pair. Verified, see data/sources.md"
     en:
       analyte: Ferritin
       value: "25"
@@ -107,7 +108,7 @@ cases:
     gold:
       no_context: {verdict: NORMAL, accept: [NORMAL]}
       relevant: {verdict: NEEDS_FOLLOW_UP, accept: [NEEDS_FOLLOW_UP, ABNORMAL]}
-    source: "TODO_VERIFY: WHO 2020 ferritin guideline (higher cutoff under inflammation)"
+    source: "BSG 2021 [S3] (normal-looking ferritin in inflammation); WHO 2020 [S1] (< 70 µg/L with inflammation). Partly supported, see data/sources.md"
     en:
       analyte: Ferritin
       value: "80"
@@ -130,7 +131,7 @@ cases:
     gold:
       no_context: {verdict: NORMAL, accept: [NORMAL]}
       relevant: {verdict: ABNORMAL, accept: [ABNORMAL]}
-    source: "TODO_VERIFY: ESC heart failure guideline (ferritin < 100, or 100–299 with TSAT < 20%). TSAT in context, not on the lab line (D14)."
+    source: "ESC 2021 HF guideline [S8]: iron deficiency = ferritin < 100 ng/mL. TSAT in context (D14). Verified, see data/sources.md"
     en:
       analyte: Ferritin
       value: "80"
@@ -153,7 +154,7 @@ cases:
     gold:
       no_context: {verdict: NORMAL, accept: [NORMAL]}
       relevant: {verdict: ABNORMAL, accept: [ABNORMAL]}
-    source: "TODO_VERIFY: KDIGO AKI, rise >= 0.3 mg/dL (26.5 µmol/L) within 48 h"
+    source: "KDIGO 2012 AKI [S9]: rise >= 0.3 mg/dL (26.5 µmol/L) within 48 h. Verified, see data/sources.md"
     en:
       analyte: Creatinine
       value: "1.1"
@@ -176,7 +177,7 @@ cases:
     gold:
       no_context: {verdict: NORMAL, accept: [NORMAL]}
       relevant: {verdict: ABNORMAL, accept: [ABNORMAL, NEEDS_FOLLOW_UP]}
-    source: "TODO_VERIFY: IADPSG / French CNGOF: fasting >= 0.92 g/L (92 mg/dL, 5.1 mmol/L)"
+    source: "IADPSG 2010 [S13], CNGOF/SFD 2010 [S14]: fasting >= 0.92 g/L in early pregnancy = GDM; 1st-trimester use not validated [S14][S16][S17]. Partly supported, see data/sources.md"
     en:
       analyte: Fasting glucose
       value: "95"
@@ -199,7 +200,7 @@ cases:
     gold:
       no_context: {verdict: ABNORMAL, accept: [ABNORMAL]}
       relevant: {verdict: NORMAL, accept: [NORMAL]}
-    source: "TODO_VERIFY: WHO anemia in pregnancy, Hb < 11.0 g/dL"
+    source: "WHO 2024 Hb cutoffs [S11]: 2nd trimester anaemia < 105 g/L; non-pregnant women < 120 g/L. Verified, see data/sources.md"
     en:
       analyte: Hemoglobin
       value: "11.3"
@@ -222,7 +223,7 @@ cases:
     gold:
       no_context: {verdict: ABNORMAL, accept: [ABNORMAL]}
       relevant: {verdict: NORMAL, accept: [NORMAL]}
-    source: "TODO_VERIFY: pediatric/adolescent ALP reference ranges. Irrelevant sentence has no identity: age is the relevant information here (D15)."
+    source: "Labcorp pediatric ranges [S10b]: boys 14 y 114–375 IU/L; CALIPER-based [S10a]. Irrelevant sentence has no identity (D15). Verified, see data/sources.md"
     en:
       analyte: Alkaline phosphatase
       value: "280"
@@ -245,7 +246,7 @@ cases:
     gold:
       no_context: {verdict: NORMAL, accept: [NORMAL]}
       relevant: {verdict: NORMAL, accept: [NORMAL]}
-    source: "Control: no trap"
+    source: "Control: no trap. MedlinePlus [S5]: male 30–400. Verified, see data/sources.md"
     en:
       analyte: Ferritin
       value: "90"
@@ -268,7 +269,7 @@ cases:
     gold:
       no_context: {verdict: NORMAL, accept: [NORMAL]}
       relevant: {verdict: NORMAL, accept: [NORMAL]}
-    source: "Control: no trap"
+    source: "Control: no trap. KDIGO 2012 [S9]: no criterion met. Verified, see data/sources.md"
     en:
       analyte: Creatinine
       value: "0.8"

@@ -67,14 +67,19 @@ def build_prompt_text(tokenizer, prompt):
     return text
 
 
-def generate(model, tokenizer, prompt_text, n_samples=0, seed=None):
-    """Greedy answer if n_samples == 0, else n_samples sampled answers from one call."""
+def generate(model, tokenizer, prompt_text, n_samples=0, seed=None, suppress_ids=None):
+    """Greedy answer if n_samples == 0, else n_samples sampled answers from one call.
+
+    suppress_ids: token ids that may never be generated (e.g. MedGemma's thinking start).
+    """
     inputs = tokenizer(prompt_text, return_tensors="pt").to(model.device)
     if n_samples:
         torch.manual_seed(seed)
         kwargs = {"do_sample": True, "num_return_sequences": n_samples, **SAMPLING}
     else:
         kwargs = {"do_sample": False}
+    if suppress_ids:
+        kwargs["suppress_tokens"] = suppress_ids
 
     with torch.no_grad():
         output = model.generate(**inputs, max_new_tokens=MAX_NEW_TOKENS, **kwargs)
@@ -111,6 +116,7 @@ def write_meta(meta_path, args, model):
         "device_map": args.device_map,
         "n_parameters_loaded": sum(p.numel() for p in model.parameters()),
         "thinking": "off",
+        "suppress_tokens": args.suppress_tokens,
         "greedy": True,
         "n_samples": args.n_samples,
         "sampling": SAMPLING,
@@ -142,6 +148,12 @@ def main():
     )
     parser.add_argument("--n-samples", default=10, type=int)
     parser.add_argument("--limit", type=int, help="only the first N prompts (quick test)")
+    parser.add_argument(
+        "--suppress-tokens",
+        nargs="*",
+        default=[],
+        help='tokens the model may never generate, e.g. "<unused94>" (MedGemma thinking start)',
+    )
     args = parser.parse_args()
     args.meta = args.meta or args.out.with_name(args.out.stem + "_meta.json")
 
@@ -160,6 +172,8 @@ def main():
         device_map=args.device_map,
     )
     model.eval()
+    suppress_ids = tokenizer.convert_tokens_to_ids(args.suppress_tokens)
+    assert tokenizer.unk_token_id not in suppress_ids, f"unknown token in {args.suppress_tokens}"
     check_finite(model, tokenizer, build_prompt_text(tokenizer, todo[0]))
     write_meta(args.meta, args, model)
 
@@ -169,9 +183,11 @@ def main():
         prompt_text = build_prompt_text(tokenizer, prompt)
         seed = seed_for(prompt["prompt_id"])
 
-        answers = [("greedy", None, *generate(model, tokenizer, prompt_text)[0])]
+        answers = [
+            ("greedy", None, *generate(model, tokenizer, prompt_text, suppress_ids=suppress_ids)[0])
+        ]
         if args.n_samples:
-            sampled = generate(model, tokenizer, prompt_text, args.n_samples, seed)
+            sampled = generate(model, tokenizer, prompt_text, args.n_samples, seed, suppress_ids)
             answers += [("sample", k, text, trunc) for k, (text, trunc) in enumerate(sampled)]
 
         seconds = round(time.time() - start, 1)
