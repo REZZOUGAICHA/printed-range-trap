@@ -230,7 +230,7 @@ def plot_sex_swap(datasets_records):
     ax.set_ylim(0, 1.12)
     ax.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1.0))
     ax.set_ylabel("Sampled answers flagging the result")
-    ax.legend(frameon=False, loc="upper left")
+    ax.legend(frameon=False, loc="upper left", bbox_to_anchor=(1.0, 1.0))
     ax.set_title(
         "Same ferritin, same symptoms, same range: only woman/man changes",
         loc="left",
