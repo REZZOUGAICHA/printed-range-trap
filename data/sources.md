@@ -149,7 +149,7 @@ criterion met [S9], inside the printed range → NORMAL.
 **[S15] WHO (2013).** *Diagnostic criteria and classification of hyperglycaemia first detected in pregnancy* (WHO/NMH/MND/13.2). Secondary (PAHO presentation of the guideline):
 - "GDM should be diagnosed at any time in pregnancy if one or more of the following criteria are met: - fasting plasma glucose 5.1-6.9 mmol/l (92 -125 mg/dl) … Quality of evidence: very low Strength of recommendation: weak".
 
-**[S16] ADA (2025).** *Standards of Care in Diabetes—2025*, §2. doi:10.2337/dc25-S002. Primary (PMC11635041).
+**[S16] ADA (2025).** *Standards of Care in Diabetes 2025*, §2. doi:10.2337/dc25-S002. Primary (PMC11635041).
 - "2.26c Screen for early abnormal glucose metabolism with dysglycemia using FPG 110–125 mg/dL (6.1–6.9 mmol/L) or A1C 5.9–6.4%."
 
 **[S17] Zhu WW et al. (2013).** Diabetes Care. doi:10.2337/dc12-1157. Evidence (abstract):

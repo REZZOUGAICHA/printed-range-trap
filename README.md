@@ -24,7 +24,7 @@ size_categories:
 
 - **The printed range overrides patient context.** In 9 cases where the patient's situation changes the correct answer, Qwen3.5-4B gave the answer implied by the printed range **10% → 50%** of the time (English) and **7% → 59%** (French) when the range was added, across 10 sampled answers per question.
 - **French reports are worse.** With the range printed, Qwen's greedy answer followed it in **78%** of trap cases in French vs **44%** in English; MedGemma's French trap rate also rises sharply when the range is printed (see below). French is the language of real Algerian lab reports.
-- **The model often knows better.** Without the printed range, it answers correctly; adding the range is enough to flip its verdict — sometimes with a reason that contradicts its own verdict.
+- **The model often knows better.** Without the printed range, it answers correctly; adding the range is enough to flip its verdict, sometimes with a reason that contradicts its own verdict.
 - **Unexpected sex asymmetry.** Same ferritin, same symptoms, same printed range: Qwen flagged the woman in 6/10 samples and the man in 1/10 (English). MedGemma flagged both 10/10.
 - **A medical model fails differently.** MedGemma-4B already gives the population-range answer in 44% of English trap cases *without* any printed range (it applies textbook norms on its own); in French, printing the range more than doubles its trap rate (21% → 54%).
 - **Controls are mostly passed, with one striking exception:** MedGemma calls a normal French creatinine (71 µmol/L, range 53–106) "above the reference value" in 58 of 60 answers. Qwen's greedy answers on controls are always NORMAL.
@@ -56,7 +56,7 @@ Medical QA benchmarks test knowledge with exam-style questions, where the answer
 - **Reasoning about context in lab tests.** [Bhasuran et al.](https://www.nature.com/articles/s41746-026-02632-3) (npj Digital Medicine 2026) evaluate causal reasoning on 99 lab-test scenarios (HbA1c, creatinine, vitamin D × age, sex, obesity, smoking) and find models weakest on counterfactual questions. A [JMIR 2024 study](https://www.jmir.org/2024/1/e56655) found GPT-4 answers to lab questions accurate but limited in contextual personalisation.
 - **Anchoring.** LLMs over-rely on a cue placed in the input: in diagnostic vignettes, LLMs kept a suggested anchor diagnosis first in 55.6% of answers vs 10–21% for physicians ([2026](https://pubmed.ncbi.nlm.nih.gov/42335861/)); identical clinical facts written in different registers change diagnoses ([Narrative Anchoring, 2026](https://arxiv.org/abs/2607.27384v1)); anchoring is widespread across LLM tasks ([2024](https://arxiv.org/abs/2412.06593)).
 
-This study asks a different question: **when a range is printed on the report — as it always is — does it override the model's reasoning about the patient?** We call this *range deference*: a clinical anchoring effect whose anchor is not an artificial hint but a standard part of every lab report. Prior work tests whether models *know* the right range; we test whether a printed range makes them *stop using* what they know. To our knowledge, no prior work isolates the printed reference range as an anchor against patient context, or compares French and English report formats.
+This study asks a different question: **when a range is printed on the report (as it always is), does it override the model's reasoning about the patient?** We call this *range deference*: a clinical anchoring effect whose anchor is not an artificial hint but a standard part of every lab report. Prior work tests whether models *know* the right range; we test whether a printed range makes them *stop using* what they know. To our knowledge, no prior work isolates the printed reference range as an anchor against patient context, or compares French and English report formats.
 
 Our results agree in direction with this literature: the printed range pulls 50–59% of answers to the range's verdict (vs 7–10% without it, Qwen), a magnitude similar to the diagnostic-anchoring study, and both models fail most where the context should change the answer.
 
@@ -119,7 +119,7 @@ The model must answer `VERDICT: NORMAL | ABNORMAL | NEEDS_FOLLOW_UP` and one sen
 
 ### Decoding
 
-1 greedy answer (the model's most likely answer) + 10 sampled answers per prompt (temperature 0.7, top-p 0.8, top-k 20 — the model card's settings; fixed seeds). Greedy is the reproducible result; sampling is what chatbot users actually receive.
+1 greedy answer (the model's most likely answer) + 10 sampled answers per prompt (temperature 0.7, top-p 0.8, top-k 20, the model card's settings; fixed seeds). Greedy is the reproducible result; sampling is what chatbot users actually receive.
 
 ### Metrics
 
@@ -130,7 +130,7 @@ The model must answer `VERDICT: NORMAL | ABNORMAL | NEEDS_FOLLOW_UP` and one sen
 | Accuracy | Over all 6 conditions of every case |
 | Irrelevant-context stability | Verdict unchanged when a clinically useless sentence is added |
 | Sex gap | Flagged (ABNORMAL or NEEDS_FOLLOW_UP) for the man minus the woman, FER_SEX pair |
-| Format failures | Unparseable answers — reported, never dropped |
+| Format failures | Unparseable answers: reported, never dropped |
 
 95% CIs are bootstrap intervals over cases.
 
@@ -164,18 +164,18 @@ Per case (sampled trap answers out of 10, relevant context, no range → range p
 
 ### Example outputs (greedy)
 
-**The model knows the pregnancy rule — until the range is printed** (HB_PREG):
-> *No range:* `VERDICT: NORMAL` — "A hemoglobin level of 11.3 g/dL falls within the normal reference range for a pregnant woman in the second trimester."
+**The model knows the pregnancy rule, until the range is printed** (HB_PREG):
+> *No range:* `VERDICT: NORMAL`: "A hemoglobin level of 11.3 g/dL falls within the normal reference range for a pregnant woman in the second trimester."
 >
-> *Range 12–16 printed:* `VERDICT: ABNORMAL` — "…falls below the standard diagnostic threshold for anemia, which is typically 11.0 g/dL or lower…"
+> *Range 12–16 printed:* `VERDICT: ABNORMAL`: "…falls below the standard diagnostic threshold for anemia, which is typically 11.0 g/dL or lower…"
 
 It cites the correct 11.0 threshold and still says 11.3 is below it.
 
 **It notices the problem and answers NORMAL anyway** (FER_CRP, range printed):
-> `VERDICT: NORMAL` — "Your ferritin level of 80 µg/L falls within the normal reference range of 15–150 µg/L, even though it may be elevated relative to your rheumatoid arthritis flare…"
+> `VERDICT: NORMAL`: "Your ferritin level of 80 µg/L falls within the normal reference range of 15–150 µg/L, even though it may be elevated relative to your rheumatoid arthritis flare…"
 
 **Reason and verdict disagree** (FER_HF, French, range printed):
-> `VERDICT: NORMAL` — « Votre ferritine se situe dans la fourchette normale, mais votre faible saturation de la transferrine suggère une carence en fer qui nécessite une évaluation clinique… »
+> `VERDICT: NORMAL`: « Votre ferritine se situe dans la fourchette normale, mais votre faible saturation de la transferrine suggère une carence en fer qui nécessite une évaluation clinique… »
 
 Without the printed range, the same prompt gave `NEEDS_FOLLOW_UP`.
 
@@ -205,13 +205,13 @@ Per case (sampled trap answers out of 10, no range → range printed):
 | FER_F, FER_SEX_F, FER_SEX_M, FER_HF | 0 → 0 | 0 → 0 |
 
 **Two different failure modes.**
-- In **English**, MedGemma is often wrong *before* any range is printed: for HB_PREG it answers ABNORMAL with no range ("Hemoglobin levels below 11 g/dL in the second trimester are generally considered low…" — for a value of 11.3). It applies population norms by itself, so printing the range changes little.
+- In **English**, MedGemma is often wrong *before* any range is printed: for HB_PREG it answers ABNORMAL with no range ("Hemoglobin levels below 11 g/dL in the second trimester are generally considered low…", for a value of 11.3). It applies population norms by itself, so printing the range changes little.
 - In **French**, it knows the right answer without the range in most cases (78% correct), and the printed range flips three cases completely (FER_CRP, CREA_TREND, HB_PREG: 0–1 → 10 out of 10).
 - It is strong on iron deficiency (FER_F, FER_HF and both sex-swap cases: always correct) and shows **no sex asymmetry** (woman and man flagged 10/10 in every condition).
 
 Irrelevant-context stability: 1.00 (EN) / 0.75 (FR). 7 French answers (0.4%) did not follow the format and are counted as failures.
 
-**A false alarm on a healthy control.** For CTRL_CREA in French (créatininémie 71 µmol/L, VR 53–106), MedGemma answers ABNORMAL in 58 of 60 sampled answers, e.g. « Le résultat de la créatininémie est supérieur à la valeur de référence » — a misreading of a value that is inside the range. In English (0.8 mg/dL) it is always NORMAL. Qwen's controls: greedy always NORMAL; some sampled answers flag CTRL_FER when an irrelevant sentence is added (5–6 of 10 NORMAL).
+**A false alarm on a healthy control.** For CTRL_CREA in French (créatininémie 71 µmol/L, VR 53–106), MedGemma answers ABNORMAL in 58 of 60 sampled answers, e.g. « Le résultat de la créatininémie est supérieur à la valeur de référence », a misreading of a value that is inside the range. In English (0.8 mg/dL) it is always NORMAL. Qwen's controls: greedy always NORMAL; some sampled answers flag CTRL_FER when an irrelevant sentence is added (5–6 of 10 NORMAL).
 
 **Spontaneous thinking (side finding).** In a first run, MedGemma entered its hidden reasoning mode (`<unused94>thought`) by itself in 34% of French answers and 0% of English ones, ran out of space and gave no verdict. The reported run suppresses that token (thinking off, as for Qwen); the first run is kept in `results/medgemma-1.5-4b/spontaneous-thinking/`.
 
@@ -227,6 +227,8 @@ Irrelevant-context stability: 1.00 (EN) / 0.75 (FR). 7 French answers (0.4%) did
 - **GLY_PREG** in English is wrong even without the range (the model does not apply the pregnancy threshold): a knowledge gap, not deference.
 - **Decoding.** Qwen's recommended `presence_penalty` is not supported by `transformers.generate()` and was omitted; Qwen ran in float16, MedGemma in float32 (float16 overflowed on the T4); MedGemma's thinking-start token was suppressed.
 - **Two models**, both ~4B. The effect may differ for other families and sizes.
+
+We plan to address these limits next: blind clinician review of every gold answer (in progress), a larger case set, several wordings of the range line, and more model families and sizes (see §6, "Next steps").
 
 ## 6. Path forward (Question 3)
 
@@ -259,7 +261,7 @@ Requirements: [uv](https://docs.astral.sh/uv/), and a GPU for inference (we used
 # Build the 144 prompts (and run the one-factor check)
 uv run python src/build_prompts.py --languages en fr
 
-# Inference (GPU) — resumable; see notebooks/kaggle_run.ipynb for the Kaggle version
+# Inference (GPU), resumable; see notebooks/kaggle_run.ipynb for the Kaggle version
 python src/run_model.py --out results/qwen3.5-4b/generations_qwen3.5-4b.jsonl
 python src/run_model.py --model-id google/medgemma-1.5-4b-it \
     --revision 91850547d9f0b2fdd21aa7c5f4f3d1a8a52c243b \
@@ -293,7 +295,7 @@ Exact model revisions, library versions, seeds and settings are saved next to ea
 
 ## License
 
-- **Data and results** (`data/`, `results/`, `docs/`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) — free to reuse with attribution.
+- **Data and results** (`data/`, `results/`, `docs/`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): free to reuse with attribution.
 - **Code** (`src/`, `notebooks/`): [MIT](LICENSE).
 - The evaluated models keep their own licences (Qwen3.5: Apache-2.0; MedGemma: Health AI Developer Foundations terms); no model weights are redistributed here.
 
