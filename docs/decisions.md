@@ -383,3 +383,38 @@ uses the right rule when it has it, an upper bound for retrieval.
 **Kaggle.** The notebook now writes answers to /kaggle/working/results,
 outside the cloned code folder, so re-running setup never deletes a partial
 run.
+
+## D23: Harness results (2026-10-05)
+
+**Runs.** Qwen: plain, instruction, guidelines, agent. MedGemma: plain,
+instruction, guidelines (no agent: no tool support). 1,584 answers each.
+Results in results/<model>/<harness>/; summary in results/harness_summary.csv,
+figure results/figures/4_harnesses.png (src/harness.py).
+
+**Trap rate / false alarms (10 samples, EN | FR).**
+- Qwen plain 50% / 13% | 59% / 11%
+- Qwen instruction 19% / 18% | 23% / 20%
+- Qwen guidelines 0% / 55% | 8% / 57%
+- Qwen agent 9% / 38% | 32% / 28%
+- MedGemma plain 50% / 17% | 54% / 29%
+- MedGemma instruction 44% / 16% | 56% / 18%
+- MedGemma guidelines 33% / 44% | 31% / 49%
+
+**Findings.**
+1. For Qwen the trap is largely a knowledge-use problem: given the guideline,
+   it almost never follows the printed range. But it then over-applies
+   special-population thresholds (heart failure, pregnancy) to people without
+   the condition: false alarms 55-57%.
+2. A one-sentence instruction is the best trade-off for Qwen. MedGemma ignores
+   it (trap unchanged), and uses injected guidelines less well (trap ~32%).
+3. Agent: Qwen called the tool in 93% of answers. In French it skipped the
+   lookup in 29% of prompts with the range printed vs 0% without it; when it
+   did not look up, it fell in the trap every time. The printed range
+   suppresses verification, not only the verdict.
+4. Agent CREA_TREND (EN): the model looked up KDIGO, quoted the >=0.3 mg/dL
+   rule, and still said a 0.4 rise did not meet it ("at the upper limit of the
+   normal reference range"): the range anchors reasoning even with the rule.
+
+**Limitations of the agent run.** One tool call allowed: 29 answers (1.8%)
+asked for the tool again instead of answering (format failures). The tool
+covers 5 tests; 7 lookups for "transferrin saturation" returned nothing.
