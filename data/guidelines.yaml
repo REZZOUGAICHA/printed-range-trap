@@ -1,0 +1,55 @@
+# Guideline thresholds given to the model in the "guidelines" harness (H2)
+# and returned by the lookup tool in the "agent" harness (H3).
+#
+# One block per analyte, with every threshold we cite for it, never the answer
+# for a given patient: the model still has to decide which one applies.
+# Every number comes from data/sources.md (reference in brackets).
+
+ferritin:
+  en: >-
+    Ferritin: below 15 µg/L indicates absent iron stores and below 30 µg/L low iron stores in adults [BSG 2021].
+    With infection or inflammation, a ferritin below 70 µg/L may indicate iron deficiency in adults, and normal-looking
+    values can occur despite iron deficiency [WHO 2020; BSG 2021]. In heart failure, iron deficiency is a ferritin below
+    100 µg/L, or 100 to 299 µg/L with a transferrin saturation below 20% [ESC 2021].
+  fr: >-
+    Ferritine : en dessous de 15 µg/L, les réserves en fer sont absentes, et en dessous de 30 µg/L elles sont basses chez
+    l'adulte [BSG 2021]. En cas d'infection ou d'inflammation, une ferritine inférieure à 70 µg/L peut indiquer une carence
+    en fer chez l'adulte, et des valeurs apparemment normales sont possibles malgré une carence [OMS 2020 ; BSG 2021].
+    Dans l'insuffisance cardiaque, la carence en fer est définie par une ferritine inférieure à 100 µg/L, ou entre 100 et
+    299 µg/L avec un coefficient de saturation de la transferrine inférieur à 20 % [ESC 2021].
+
+creatinine:
+  en: >-
+    Creatinine: acute kidney injury is an increase in serum creatinine of at least 0.3 mg/dL within 48 hours, or to at
+    least 1.5 times baseline within the prior 7 days [KDIGO 2012].
+  fr: >-
+    Créatininémie : l'insuffisance rénale aiguë est définie par une augmentation de la créatininémie d'au moins
+    26,5 µmol/L en 48 heures, ou jusqu'à au moins 1,5 fois la valeur de base dans les 7 jours précédents [KDIGO 2012].
+
+fasting_glucose:
+  en: >-
+    Fasting glucose in pregnancy: a fasting plasma glucose of 92 mg/dL or more, at any time in pregnancy, is classified as
+    gestational diabetes [IADPSG 2010; WHO 2013]. The relevance of this threshold in the first trimester has not been
+    evaluated [CNGOF/SFD 2010].
+  fr: >-
+    Glycémie à jeun pendant la grossesse : une glycémie à jeun de 0,92 g/L ou plus, à tout moment de la grossesse, définit
+    un diabète gestationnel [IADPSG 2010 ; OMS 2013]. La pertinence de ce seuil au premier trimestre n'a pas été évaluée
+    [CNGOF/SFD 2010].
+
+hemoglobin:
+  en: >-
+    Hemoglobin: anaemia is a hemoglobin below 12.0 g/dL in non-pregnant women. In pregnancy, anaemia is below 11.0 g/dL in
+    the first trimester, below 10.5 g/dL in the second trimester and below 11.0 g/dL in the third trimester [WHO 2024].
+  fr: >-
+    Hémoglobine : l'anémie est définie par une hémoglobine inférieure à 12,0 g/dL chez la femme non enceinte. Pendant la
+    grossesse, l'anémie est définie par une valeur inférieure à 11,0 g/dL au premier trimestre, à 10,5 g/dL au deuxième
+    trimestre et à 11,0 g/dL au troisième trimestre [OMS 2024].
+
+alkaline_phosphatase:
+  en: >-
+    Alkaline phosphatase: the adult reference range is about 44 to 121 U/L. It is higher during growth: for boys aged
+    14, the reference range is about 114 to 375 U/L [Labcorp pediatric ranges; CALIPER].
+  fr: >-
+    Phosphatases alcalines : chez l'adulte, l'intervalle de référence est d'environ 44 à 121 U/L. Elles sont plus élevées
+    pendant la croissance : chez le garçon de 14 ans, l'intervalle de référence est d'environ 114 à 375 U/L
+    [Labcorp, intervalles pédiatriques ; CALIPER].

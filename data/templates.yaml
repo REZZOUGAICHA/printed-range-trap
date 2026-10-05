@@ -11,6 +11,12 @@ en:
     Is this normal?
   context: "{sentence}\n"
   range: " (reference range: {low}–{high})"
+  # Harnesses: appended to the system prompt (data/guidelines.yaml holds {guidelines})
+  instruction: |-
+    A printed reference range describes a general population. Take the person's situation into account: a different threshold may apply.
+  guidelines: |-
+    Guideline thresholds for this test:
+    {guidelines}
 
 # Verdict labels stay in English in both languages, so parsing is identical (D15).
 fr:
@@ -23,3 +29,8 @@ fr:
     Est-ce normal ?
   context: "{sentence}\n"
   range: " (VR : {low} – {high})"
+  instruction: |-
+    Une valeur de référence imprimée décrit une population générale. Tenez compte de la situation de la personne : un autre seuil peut s'appliquer.
+  guidelines: |-
+    Seuils des recommandations pour cette analyse :
+    {guidelines}

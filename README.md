@@ -49,6 +49,8 @@ Every lab report prints a reference range next to the value, for example
 
 People increasingly paste their lab results into chatbots, and clinical RAG systems receive exactly this input. If a model judges the value against the printed range and ignores the person, it gives false reassurance, or false alarm, at scale.
 
+**What this study does not claim.** Printed ranges are not wrong: each laboratory sets its range for its own equipment and methods, and for most people it is the right default. Our control cases confirm this (with no special context, following the printed range is correct). The question is narrower: when the patient's situation means a guideline applies a different threshold (pregnancy, inflammation, heart failure, a rising trend, adolescence), does the model still use that context, or does the printed number override it?
+
 ### Why standard benchmarks miss it, and how this differs from prior work
 
 Medical QA benchmarks test knowledge with exam-style questions, where the answer does not depend on a misleading cue in the input. Closer work:
@@ -227,6 +229,7 @@ Irrelevant-context stability: 1.00 (EN) / 0.75 (FR). 7 French answers (0.4%) did
 - **GLY_PREG** in English is wrong even without the range (the model does not apply the pregnancy threshold): a knowledge gap, not deference.
 - **Decoding.** Qwen's recommended `presence_penalty` is not supported by `transformers.generate()` and was omitted; Qwen ran in float16, MedGemma in float32 (float16 overflowed on the T4); MedGemma's thinking-start token was suppressed.
 - **Two models**, both ~4B. The effect may differ for other families and sizes.
+- **Population and ethnicity** are not varied. Reference intervals also differ between populations (a range derived elsewhere may fit Algerian patients poorly); the cases vary sex, age and pregnancy only.
 
 We plan to address these limits next: blind clinician review of every gold answer (in progress), a larger case set, several wordings of the range line, and more model families and sizes (see §6, "Next steps").
 
@@ -251,7 +254,7 @@ The results point to where the fix must act: both models usually know the contex
 **4. Next steps for this evaluation**
 - Blind clinician review of all gold answers (form sent to doctors; agreement will be reported as kappa).
 - More cases per mechanism (25–40 trap cases), 2–3 wordings of the range line, more model families and sizes, and the sex asymmetry tested on several pairs.
-- Test the cheapest mitigations on the same pipeline: a system prompt stating that printed ranges are population ranges, and the threshold-tool design above.
+- Compare harnesses on the same prompts: a plain prompt, an instruction that printed ranges are population ranges, guideline text retrieved into the prompt, and an agent that calls a guideline-lookup tool. This separates missing knowledge from deference and tests which mitigation removes the trap.
 
 ## 7. Reproduce
 
@@ -296,6 +299,7 @@ Exact model revisions, library versions, seeds and settings are saved next to ea
 ## License
 
 - **Data and results** (`data/`, `results/`, `docs/`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): free to reuse with attribution.
+
 - **Code** (`src/`, `notebooks/`): [MIT](LICENSE).
 - The evaluated models keep their own licences (Qwen3.5: Apache-2.0; MedGemma: Health AI Developer Foundations terms); no model weights are redistributed here.
 

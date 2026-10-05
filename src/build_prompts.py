@@ -1,8 +1,14 @@
 """Build prompt variants: cases x range x context x language -> data/prompts.jsonl.
 
+A harness only changes the system prompt; user messages, prompt ids (and so the
+sampling seeds) stay the same, so answers can be compared prompt by prompt.
+  plain        the original prompts (data/prompts.jsonl)
+  instruction  + one sentence: a printed range describes a general population
+  guidelines   + the guideline thresholds for the test (data/guidelines.yaml)
+
 Usage:
-    uv run python src/build_prompts.py
     uv run python src/build_prompts.py --languages en fr
+    uv run python src/build_prompts.py --languages en fr --harness guidelines
 """
 
 import argparse
@@ -15,6 +21,7 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 RANGES = ["none", "printed"]
 CONTEXTS = ["none", "relevant", "irrelevant"]
+HARNESSES = ["plain", "instruction", "guidelines"]
 
 
 def load_yaml(path):
@@ -40,28 +47,46 @@ def build_user_message(template, text, range_level, context_level):
     )
 
 
-def build_variants(cases, templates, languages):
+def analyte_key(case):
+    """'Fasting glucose' -> 'fasting_glucose', the key used in guidelines.yaml."""
+    return case["en"]["analyte"].lower().replace(" ", "_")
+
+
+def build_system(template, harness, guideline_text):
+    system = template["system"]
+    if harness == "instruction":
+        system += "\n\n" + template["instruction"]
+    elif harness == "guidelines":
+        system += "\n\n" + template["guidelines"].format(guidelines=guideline_text)
+    return system
+
+
+def build_variants(cases, templates, languages, harness="plain", guidelines=None):
     variants = []
     for case, lang in product(cases, languages):
         text = case[lang]
         template = templates[lang]
+        guideline_text = guidelines[analyte_key(case)][lang] if guidelines else None
+        system = build_system(template, harness, guideline_text)
         for range_level, context_level in product(RANGES, CONTEXTS):
             # "none" and "irrelevant" context share the context-free gold
             gold = case["gold"]["relevant" if context_level == "relevant" else "no_context"]
-            variants.append(
-                {
-                    "prompt_id": f"{case['id']}|{lang}|range={range_level}|context={context_level}",
-                    "case_id": case["id"],
-                    "language": lang,
-                    "range": range_level,
-                    "context": context_level,
-                    "system": template["system"],
-                    "user": build_user_message(template, text, range_level, context_level),
-                    "gold": gold["verdict"],
-                    "accept": gold["accept"],
-                    "printed_range_verdict": case["printed_range_verdict"],
-                }
-            )
+            variant = {
+                "prompt_id": f"{case['id']}|{lang}|range={range_level}|context={context_level}",
+                "case_id": case["id"],
+                "language": lang,
+                "range": range_level,
+                "context": context_level,
+                "system": system,
+                "user": build_user_message(template, text, range_level, context_level),
+                "gold": gold["verdict"],
+                "accept": gold["accept"],
+                "printed_range_verdict": case["printed_range_verdict"],
+            }
+            # plain prompts keep their original fields, so data/prompts.jsonl is unchanged
+            if harness != "plain":
+                variant["harness"] = harness
+            variants.append(variant)
     return variants
 
 
@@ -99,13 +124,20 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cases", default=ROOT / "data" / "cases.yaml", type=Path)
     parser.add_argument("--templates", default=ROOT / "data" / "templates.yaml", type=Path)
-    parser.add_argument("--out", default=ROOT / "data" / "prompts.jsonl", type=Path)
+    parser.add_argument("--guidelines", default=ROOT / "data" / "guidelines.yaml", type=Path)
+    parser.add_argument(
+        "--out", type=Path, help="default: data/prompts.jsonl or data/prompts_<harness>.jsonl"
+    )
     parser.add_argument("--languages", nargs="+", default=["en"])
+    parser.add_argument("--harness", default="plain", choices=HARNESSES)
     args = parser.parse_args()
+    suffix = "" if args.harness == "plain" else f"_{args.harness}"
+    args.out = args.out or ROOT / "data" / f"prompts{suffix}.jsonl"
 
     cases = load_yaml(args.cases)["cases"]
     templates = load_yaml(args.templates)
-    variants = build_variants(cases, templates, args.languages)
+    guidelines = load_yaml(args.guidelines) if args.harness == "guidelines" else None
+    variants = build_variants(cases, templates, args.languages, args.harness, guidelines)
 
     n_checked = check_one_factor(variants)
     assert len({v["prompt_id"] for v in variants}) == len(variants), "duplicate prompt_id"

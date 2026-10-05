@@ -355,3 +355,31 @@ metrics; `qwen3.5-4b/pilot/` the Phase 1 pilot; `medgemma-1.5-4b/
 spontaneous-thinking/` the discarded first run. The Kaggle notebook writes to
 the same paths and now always re-clones the repo (a stale copy had silently
 kept old code).
+
+## D22: Harness comparison: instruction, guidelines, agent (2026-10-04)
+
+**Question.** Does the trap disappear with a better setup around the same
+model? This separates missing knowledge from deference: if the model still
+follows the printed range when the right guideline is in front of it, the
+problem is deference, not knowledge.
+
+**Design.** Same 144 prompts, same prompt ids and seeds (paired comparison);
+only the system prompt changes.
+- plain: the original runs (D17, D21).
+- instruction: one added sentence, "a printed reference range describes a
+  general population; take the person's situation into account".
+- guidelines: every guideline threshold we cite for that test
+  (`data/guidelines.yaml`, numbers from `data/sources.md`), never the answer
+  for the patient. The model must still pick the threshold that applies.
+- agent (next step, Qwen only): the model may call a guideline-lookup tool
+  returning the same text. MedGemma's chat template has no tool support.
+All 144 prompts run in every harness, so controls show whether a harness
+causes false alarms.
+
+**Caveat.** The guideline text comes from the same sources used to verify the
+gold answers, so the guidelines and agent harnesses measure whether the model
+uses the right rule when it has it, an upper bound for retrieval.
+
+**Kaggle.** The notebook now writes answers to /kaggle/working/results,
+outside the cloned code folder, so re-running setup never deletes a partial
+run.
